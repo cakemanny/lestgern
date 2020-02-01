@@ -1,0 +1,58 @@
+.Grid {
+  display: flex;
+  /* full-height */
+  align-items: stretch;
+}
+.Grid-cell {
+  flex: 1;
+}
+.Grid-cell-2 {
+  flex: 2;
+}
+
+body {
+  font-family: sans-serif;
+}
+
+.content-input {
+  width: 90%;
+  height: 5em;
+}
+
+.word {
+  cursor: pointer;
+}
+.new-word {
+  background: blue;
+  color: white;
+}
+.known-word-0 {
+  background: yellow;
+}
+.known-word-1 {
+  background: #ffff3f;
+}
+.known-word-2 {
+  background: #ffff7f;
+}
+.known-word-3 {
+  background: #ffffaf;
+}
+.known-word-4 {
+  background: #ffffff;
+}
+.punc {
+  color: black;
+}
+
+input.hint {
+  width: 90%;
+}
+
+button.fam {
+  cursor: pointer;
+  background: #ffffaf;
+}
+button.fam.sel {
+  background: yellow;
+}

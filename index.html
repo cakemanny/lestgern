@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <meta charset=utf8>
+  <meta http-equiv="X-UA-Compatible" value="IE=edge">
+  <meta name=viewport content="width=device-width, initial-scale=1">
+  <title>LingQ Rip Off</title>
+  <link href=main.css rel=stylesheet>
+  <script src="https://unpkg.com/vue"></script>
+
+  <div id="app" class="Grid">
+    <div class="Grid-cell-2">
+      <textarea class="content-input"
+                placeholder="paste content here"
+                v-model="content"></textarea>
+
+      <div id="content-interactive">
+        <span v-for="lexeme in lexemes">
+          <span v-if="isWord(lexeme)"
+                v-bind:class="{
+                               'known-word-0': familiarity(lexeme.word)==0,
+                               'known-word-1': familiarity(lexeme.word)==1,
+                               'known-word-2': familiarity(lexeme.word)==2,
+                               'known-word-3': familiarity(lexeme.word)==3,
+                               'known-word-4': familiarity(lexeme.word)>3,
+                               'new-word': isNew(lexeme)}"
+                v-on:click="selectWord(lexeme.word)"
+                class="word"
+                >{{ lexeme.word }}</span><span v-if="!isWord(lexeme)" class="punc"
+                >{{ lexeme.word }}</span>
+        </span>
+      </div>
+    </div>
+    <div class="Grid-cell">
+      <small>wordcount: {{wordCount}}</small>
+      <div v-if="!selectedWord">
+        <h3>Select a word</h3>
+      </div>
+      <div v-if="selectedWord">
+        <h3>{{ selectedWord }}</h3>
+        <h4>Hint:</h4>
+        <input type="text" class="hint" v-model="selectedWordHint" />
+        <ul>
+          <li v-for="tag in tags">{{ tag }}</li>
+          <li>
+            <input type="text" placeholder="new tag" v-model="newTag"/>
+            <button v-on:click="addTag()">Add</button>
+          </li>
+        </ul>
+        <div>
+          <button v-for="i in [0,1,2,3,4]"
+                  class="fam"
+                  v-bind:class="{'sel': familiarity(selectedWord)==i}"
+                  v-on:click="setFamiliarity(i)"
+                  >{{ i }}</button>
+        </div>
+        <div>
+          <button>Lookup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="main.js"></script>
+</html>
