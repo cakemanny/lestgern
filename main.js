@@ -5,6 +5,9 @@ function isAlpha(c) {
     return true;
   }
   // Maybe add some french ones in, if we need to
+  if ("çéâêîôûàèìòùëïü".indexOf(c) != -1) {
+    return true;
+  }
   return false;
 }
 
@@ -38,9 +41,29 @@ var app = new Vue({
     }
   },
   computed: {
+    /* Number  */
     wordCount() {
       return Object.keys(this.wordBank).length;
     },
+
+    countWordsInText() {
+      let uniqueWords = new Set();
+      let knownWords = new Set();
+      let lexemes = this.lexemes;
+      for (let lexeme of lexemes) {
+        if (lexeme.kind === "word") {
+          uniqueWords.add(lexeme.word);
+          if (this.isKnown(lexeme)) {
+            knownWords.add(lexeme.word);
+          }
+        }
+      }
+      return {
+        unique: uniqueWords.size,
+        unknown: uniqueWords.size - knownWords.size
+      };
+    },
+
     tags() {
       let bankEntry = this.wordBank[this.selectedWord];
       if (!bankEntry) {
@@ -48,6 +71,7 @@ var app = new Vue({
       }
       return bankEntry.tags || [];
     },
+
     lexemes() {
       let content = this.content;
 
@@ -56,31 +80,58 @@ var app = new Vue({
       }
 
       const WORD = 0;
-      const PUNC = 1;
+      const PUNC = 1; // incl space
+      const NEWLINE = 2;
 
-      var theWords = [];
-      var currentWord = "";
-      var state = 0;
-      if (isAlpha(content.charAt(0))) {
+      let theWords = [];
+      let currentWord = "";
+      let state = 0;
+      let c0 = content.charAt(0);
+      if (isAlpha(c0)) {
         state = WORD;
+      } else if (c0 === "\n" || c0 === "\r") {
+        state = NEWLINE;
       } else {
         state = PUNC;
       }
+
+      const switchTo = (newState, c) => {
+        state = newState;
+        currentWord = c;
+      };
       for (let c of content) {
+        if (c === "\r") {
+          continue;
+        }
         if (state == WORD) {
           if (isAlpha(c)) {
             currentWord += c;
-          } else {
-            state = PUNC;
+          } else if (c == "\n") {
             theWords.push(currentWord);
-            currentWord = c;
+            switchTo(NEWLINE, c);
+          } else {
+            theWords.push(currentWord);
+            switchTo(PUNC, c);
+          }
+        } else if (state == NEWLINE) {
+          theWords.push("\n");
+          if (isAlpha(c)) {
+            switchTo(WORD, c);
+          } else if (c === "\n") {
+            // pass
+          } else {
+            switchTo(PUNC, c);
           }
         } else {
+          /* PUNC */
           if (isAlpha(c)) {
-            state = WORD;
             theWords.push(currentWord);
-            currentWord = c;
+            switchTo(WORD, c);
+          } else if (c == "\n") {
+            theWords.push(currentWord);
+            switchTo(NEWLINE, c);
           } else {
+            /* PUNC */
             currentWord += c;
           }
         }
@@ -88,11 +139,14 @@ var app = new Vue({
       // add the final word
       theWords.push(currentWord);
 
-      //var theWords = this.content.split(/\s/);
-      var theLexemes = theWords.map(word => {
+      //let theWords = this.content.split(/\s/);
+      let theLexemes = theWords.map(word => {
         // want "word", "punctuation", "space"... I think
-        if (isAlpha(word.charAt(0))) {
+        let c0 = word.charAt(0);
+        if (isAlpha(c0)) {
           return { kind: "word", word: word };
+        } else if (c0 == "\n") {
+          return { kind: "newline" };
         } else {
           return { kind: "punc", word: word };
         }
@@ -103,6 +157,12 @@ var app = new Vue({
   methods: {
     isWord(lexeme) {
       return lexeme.kind === "word";
+    },
+    isPunc(lexeme) {
+      return lexeme.kind === "punc";
+    },
+    isNewline(lexeme) {
+      return lexeme.kind === "newline";
     },
     isIgnored(lexeme) {
       return this.ignoredWords.hasOwnProperty(lexeme.word);
@@ -154,7 +214,18 @@ var app = new Vue({
     addTag() {
       if (this.selectedWord && this.newTag) {
         let wordEntry = this._getOrAdd(this.wordBank, this.selectedWord);
-        wordEntry.tags.push(this.newTag);
+
+        if (!wordEntry.tags.includes(this.newTag)) {
+          // concat so Vue can track the update
+          wordEntry.tags = wordEntry.tags.concat(this.newTag);
+        }
+        // temp code to remove dups
+        let rebuilt = {};
+        for (let x of wordEntry.tags) {
+          rebuilt[x] = 1;
+        }
+        wordEntry.tags = Object.keys(rebuilt);
+        //
         this.saveWordBank();
       }
     },

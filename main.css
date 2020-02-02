@@ -5,13 +5,16 @@
 }
 .Grid-cell {
   flex: 1;
+  padding: 8px;
 }
 .Grid-cell-2 {
   flex: 2;
+  padding: 8px;
 }
 
 body {
   font-family: sans-serif;
+  margin: 0;
 }
 
 .content-input {

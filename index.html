@@ -9,6 +9,8 @@
 
   <div id="app" class="Grid">
     <div class="Grid-cell-2">
+      <small>Unique words: {{countWordsInText.unique}}</small>
+      <small>Unknown words: {{countWordsInText.unknown}}</small>
       <textarea class="content-input"
                 placeholder="paste content here"
                 v-model="content"></textarea>
@@ -25,13 +27,13 @@
                                'new-word': isNew(lexeme)}"
                 v-on:click="selectWord(lexeme.word)"
                 class="word"
-                >{{ lexeme.word }}</span><span v-if="!isWord(lexeme)" class="punc"
-                >{{ lexeme.word }}</span>
+                >{{ lexeme.word }}</span><span v-if="isPunc(lexeme)" class="punc"
+                >{{ lexeme.word }}</span><br v-if="isNewline(lexeme)" class="newline"/>
         </span>
       </div>
     </div>
     <div class="Grid-cell">
-      <small>wordcount: {{wordCount}}</small>
+      <small>Count of words in word bank: {{wordCount}}</small>
       <div v-if="!selectedWord">
         <h3>Select a word</h3>
       </div>
@@ -56,6 +58,14 @@
         <div>
           <button>Lookup</button>
         </div>
+        <a target="_"
+          v-bind:href="'https://en.wiktionary.org/wiki/' + selectedWord + '#German'">
+          EN Wiktionary: {{selectedWord}}
+        </a>
+        <a target="_"
+          v-bind:href="'https://translate.google.com/#view=home&op=translate&sl=de&tl=en&text=' + selectedWord">
+          Google Translate: {{selectedWord}}
+        </a>
       </div>
     </div>
   </div>
