@@ -9,6 +9,7 @@
 
   <div id="app" class="Grid">
     <div class="Grid-cell-2">
+      <keyboard-events v-on:keydown="handleKey"></keyboard-events>
       <small>Unique words: {{countWordsInText.unique}}</small>
       <small>Unknown words: {{countWordsInText.unknown}}</small>
       <textarea class="content-input"
@@ -16,7 +17,7 @@
                 v-model="content"></textarea>
 
       <div id="content-interactive">
-        <span v-for="lexeme in lexemes">
+        <span v-for="(lexeme, index) in lexemes">
           <span v-if="isWord(lexeme)"
                 v-bind:class="{
                                'known-word-0': familiarity(lexeme.word)==0,
@@ -24,8 +25,9 @@
                                'known-word-2': familiarity(lexeme.word)==2,
                                'known-word-3': familiarity(lexeme.word)==3,
                                'known-word-4': familiarity(lexeme.word)>3,
+                               'selected-word': index==selectedLexemeIdx,
                                'new-word': isNew(lexeme)}"
-                v-on:click="selectWord(lexeme.word)"
+                v-on:click="selectWord(index)"
                 class="word"
                 >{{ lexeme.word }}</span><span v-if="isPunc(lexeme)" class="punc"
                 >{{ lexeme.word }}</span><br v-if="isNewline(lexeme)" class="newline"/>
@@ -39,10 +41,14 @@
       </div>
       <div v-if="selectedWord">
         <h3>{{ selectedWord }}</h3>
-        <h4>Hint:</h4>
-        <input type="text" class="hint" v-model="selectedWordHint" />
+        <input type="text" id="hint" class="hint" placeholder="hint"
+          v-model="hint" v-on:keydown.esc="blurHint"
+          v-on:keydown.enter="blurHint" />
         <ul>
-          <li v-for="tag in tags">{{ tag }}</li>
+          <li v-for="tag in tags">
+            {{ tag }}
+            <button v-on:click="deleteTag(tag)">x</button>
+          </li>
           <li>
             <input type="text" placeholder="new tag" v-model="newTag"/>
             <button v-on:click="addTag()">Add</button>

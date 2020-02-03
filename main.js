@@ -11,14 +11,31 @@ function isAlpha(c) {
   return false;
 }
 
+Vue.component("keyboard-events", {
+  created: function() {
+    const component = this;
+    this.handler = function(e) {
+      if (event.target.localName === "body") {
+        component.$emit("keydown", e);
+      }
+    };
+    window.addEventListener("keydown", this.handler);
+  },
+  beforeDestroy: function() {
+    window.removeEventListener("keydown", this.handler);
+  },
+  template: `<div style="display:none"></div>`
+});
+
 var app = new Vue({
   el: "#app",
   data: {
     content: "",
 
-    selectedWord: "wird",
-    selectedWordHint: "becomes",
+    hint: "",
     newTag: "",
+
+    selectedLexemeIdx: 0,
 
     // TODO: app lifecycle -> onload -> load from some storage
     wordBank: {
@@ -39,6 +56,13 @@ var app = new Vue({
     if (wbJSON) {
       this.wordBank = JSON.parse(wbJSON);
     }
+    let savedContent = localStorage.lingc_0_content;
+    if (savedContent) {
+      this.content = savedContent;
+    }
+
+    // TODO: move to sub-component
+    this.loadHint();
   },
   computed: {
     /* Number  */
@@ -69,7 +93,10 @@ var app = new Vue({
       if (!bankEntry) {
         return [];
       }
-      return bankEntry.tags || [];
+      if (!bankEntry.tags) {
+        bankEntry.tags = [];
+      }
+      return bankEntry.tags;
     },
 
     lexemes() {
@@ -151,7 +178,25 @@ var app = new Vue({
           return { kind: "punc", word: word };
         }
       });
+
+      // Clearly the content hasn't broken our program... save!
+      this.saveContent();
+
       return theLexemes;
+    },
+
+    selectedWord() {
+      if (this.lexemes && this.lexemes.length) {
+        if (this.selectedLexemeIdx >= this.lexemes.length) {
+          return "";
+        }
+
+        let lexeme = this.lexemes[this.selectedLexemeIdx];
+        if (this.isWord(lexeme)) {
+          return lexeme.word;
+        }
+      }
+      return "";
     }
   },
   methods: {
@@ -172,32 +217,148 @@ var app = new Vue({
     },
     familiarity(word) {
       if (this.wordBank.hasOwnProperty(word)) {
-        return this.wordBank[word].familiarity || 0;
+        let bankEntry = this.wordBank[word];
+        if (typeof bankEntry.familiarity === "undefined") {
+          bankEntry.familiary = 0;
+        }
+        return bankEntry.familiarity;
       }
       return null;
     },
     isNew(lexeme) {
-      return !this.isKnown(lexeme) && !this.isIgnored(lexeme);
+      return (
+        this.isWord(lexeme) && !this.isKnown(lexeme) && !this.isIgnored(lexeme)
+      );
     },
 
     saveWordBank() {
       localStorage.lingc = JSON.stringify(this.wordBank);
     },
 
-    selectWord(word) {
-      if (this.selectedWord && this.selectedWordHint) {
+    saveContent() {
+      if (this.content && this.content !== localStorage.lingc_0_content) {
+        localStorage.lingc_0_content = this.content;
+      }
+    },
+
+    selectWord(index) {
+      let lexeme = this.lexemes[index];
+      if (!lexeme || !this.isWord(lexeme)) {
+        return;
+      }
+      if (this.selectedWord && this.hint) {
         // save old word
         let wordEntry = this._getOrAdd(this.wordBank, this.selectedWord);
-        wordEntry.hint = this.selectedWordHint;
+        wordEntry.hint = this.hint;
         this.saveWordBank();
       }
-      this.selectedWord = word;
-      this.selectedWordHint = "";
-      if (this.wordBank[word]) {
-        this.selectedWordHint = this.wordBank[word].hint;
+
+      this.selectedLexemeIdx = index;
+      this.loadHint();
+      this.newTag = "";
+    },
+
+    handleKey(event) {
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        // These are not for us.
+        return;
       }
 
-      this.newTag = "";
+      if (event.key === "ArrowLeft") {
+        return this.selectLeft(event);
+      }
+      if (event.key === "ArrowRight") {
+        return this.selectRight(event);
+      }
+      if (event.key === "h") {
+        return this.focusHint(event);
+      }
+      if (event.key === "b") {
+        return this.selectNextNewWord(event);
+      }
+      if ("01234".indexOf(event.key) !== -1) {
+        // Seems a bit heavyweight but ...
+        let value = JSON.parse(event.key);
+        this.setFamiliarity(value);
+        event.preventDefault();
+        return;
+      }
+    },
+
+    focusHint(event) {
+      let hintElem = document.getElementById("hint");
+      if (hintElem) {
+        hintElem.focus();
+        event.stopPropagation();
+        /* stop the h being inputted */
+        event.preventDefault();
+      }
+    },
+
+    blurHint(event) {
+      event.target.blur();
+      event.preventDefault();
+    },
+
+    selectLeft(event) {
+      if (this.selectedLexemeIdx > 0) {
+        let idx = this.selectedLexemeIdx;
+        let lexemes = this.lexemes;
+        while (idx >= 0) {
+          idx -= 1;
+          if (this.isWord(lexemes[idx])) {
+            this.selectWord(idx);
+            event.stopPropagation();
+            event.preventDefault();
+            return;
+          }
+        }
+      }
+    },
+
+    selectRight(event) {
+      let lexemes = this.lexemes;
+      let idx = this.selectedLexemeIdx;
+      let len = lexemes.length;
+      if (idx < len - 1) {
+        while (idx < len) {
+          idx += 1;
+          if (this.isWord(lexemes[idx])) {
+            this.selectWord(idx);
+            event.stopPropagation();
+            event.preventDefault();
+            return;
+          }
+        }
+      }
+    },
+
+    selectNextNewWord(event) {
+      let lexemes = this.lexemes;
+      let idx = this.selectedLexemeIdx;
+      let len = lexemes.length;
+      if (idx < len - 1) {
+        while (idx < len) {
+          idx += 1;
+          if (this.isNew(lexemes[idx])) {
+            this.selectWord(idx);
+            event.stopPropagation();
+            event.preventDefault();
+            return;
+          }
+        }
+      }
+    },
+
+    loadHint() {
+      if (this.selectedWord) {
+        let word = this.selectedWord;
+        if (this.wordBank[word]) {
+          this.hint = this.wordBank[word].hint;
+          return;
+        }
+      }
+      this.hint = "";
     },
 
     _getOrAdd(wordBank, word) {
@@ -226,6 +387,14 @@ var app = new Vue({
         }
         wordEntry.tags = Object.keys(rebuilt);
         //
+        this.saveWordBank();
+      }
+    },
+
+    deleteTag(tag) {
+      if (this.selectedWord) {
+        let wordEntry = this._getOrAdd(this.wordBank, this.selectedWord);
+        wordEntry.tags = wordEntry.tags.filter(t => t !== tag);
         this.saveWordBank();
       }
     },

@@ -22,12 +22,15 @@ body {
   height: 5em;
 }
 
+.punc {
+  color: #636363; /* gray */
+}
 .word {
   cursor: pointer;
+  color: #636363; /* gray */
 }
 .new-word {
-  background: blue;
-  color: white;
+  background: #d7e8ff;
 }
 .known-word-0 {
   background: yellow;
@@ -44,7 +47,7 @@ body {
 .known-word-4 {
   background: #ffffff;
 }
-.punc {
+.selected-word {
   color: black;
 }
 
