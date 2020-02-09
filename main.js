@@ -35,7 +35,7 @@ var app = new Vue({
     hint: "",
     newTag: "",
 
-    selectedLexemeIdx: 0,
+    selectedLexemeIdx: -1,
 
     // TODO: app lifecycle -> onload -> load from some storage
     wordBank: {
@@ -100,7 +100,11 @@ var app = new Vue({
     },
 
     lexemes() {
-      let content = this.content;
+      // This content has changed, so the selected index may no longer refer to
+      // the same word
+      this.selectedLexemeIdx = -1;
+
+      const content = this.content;
 
       if (!content) {
         return [];
@@ -113,7 +117,7 @@ var app = new Vue({
       let theWords = [];
       let currentWord = "";
       let state = 0;
-      let c0 = content.charAt(0);
+      const c0 = content.charAt(0);
       if (isAlpha(c0)) {
         state = WORD;
       } else if (c0 === "\n" || c0 === "\r") {
@@ -166,10 +170,9 @@ var app = new Vue({
       // add the final word
       theWords.push(currentWord);
 
-      //let theWords = this.content.split(/\s/);
-      let theLexemes = theWords.map(word => {
+      const theLexemes = theWords.map(word => {
         // want "word", "punctuation", "space"... I think
-        let c0 = word.charAt(0);
+        const c0 = word.charAt(0);
         if (isAlpha(c0)) {
           return { kind: "word", word: word };
         } else if (c0 == "\n") {
@@ -186,12 +189,14 @@ var app = new Vue({
     },
 
     selectedWord() {
-      if (this.lexemes && this.lexemes.length) {
-        if (this.selectedLexemeIdx >= this.lexemes.length) {
+      const lexemes = this.lexemes;
+      if (lexemes && lexemes.length) {
+        const idx = this.selectedLexemeIdx;
+        if (idx < 0 || idx >= lexemes.length) {
           return "";
         }
 
-        let lexeme = this.lexemes[this.selectedLexemeIdx];
+        const lexeme = lexemes[idx];
         if (this.isWord(lexeme)) {
           return lexeme.word;
         }
@@ -249,8 +254,10 @@ var app = new Vue({
       if (this.selectedWord && this.hint) {
         // save old word
         let wordEntry = this._getOrAdd(this.wordBank, this.selectedWord);
-        wordEntry.hint = this.hint;
-        this.saveWordBank();
+        if (this.hint !== wordEntry.hint) {
+          wordEntry.hint = this.hint;
+          this.saveWordBank();
+        }
       }
 
       this.selectedLexemeIdx = index;
@@ -264,6 +271,9 @@ var app = new Vue({
         return;
       }
 
+      // TODO: Add some more of these:
+      // https://www.lingq.com/en/forum/open-forum/a-guide-to-keyboard-shortcuts/
+
       if (event.key === "ArrowLeft") {
         return this.selectLeft(event);
       }
@@ -275,6 +285,12 @@ var app = new Vue({
       }
       if (event.key === "b") {
         return this.selectNextNewWord(event);
+      }
+      if (event.key === "x") {
+        return this.ignoreWord(event);
+      }
+      if (event.key === "X") {
+        return this.unIgnoreWord(event);
       }
       if ("01234".indexOf(event.key) !== -1) {
         // Seems a bit heavyweight but ...
@@ -396,6 +412,22 @@ var app = new Vue({
         let wordEntry = this._getOrAdd(this.wordBank, this.selectedWord);
         wordEntry.tags = wordEntry.tags.filter(t => t !== tag);
         this.saveWordBank();
+      }
+    },
+
+    ignoreWord() {
+      if (this.selectedWord) {
+        this.ignoredWords[this.selectedWord] = true;
+        event.stopPropagation();
+        event.preventDefault();
+      }
+    },
+
+    unIgnoreWord(event) {
+      if (this.selectedWord) {
+        delete this.ignoredWords[this.selectedWord];
+        event.stopPropagation();
+        event.preventDefault();
       }
     },
 

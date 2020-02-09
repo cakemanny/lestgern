@@ -64,14 +64,25 @@
         <div>
           <button>Lookup</button>
         </div>
-        <a target="_"
-          v-bind:href="'https://en.wiktionary.org/wiki/' + selectedWord + '#German'">
-          EN Wiktionary: {{selectedWord}}
-        </a>
-        <a target="_"
-          v-bind:href="'https://translate.google.com/#view=home&op=translate&sl=de&tl=en&text=' + selectedWord">
-          Google Translate: {{selectedWord}}
-        </a>
+        <p>
+          <a target="_"
+            v-bind:href="'https://en.wiktionary.org/wiki/' + selectedWord + '#German'">
+            EN Wiktionary: {{selectedWord}}
+          </a>
+        </p>
+        <p>
+          <a target="_"
+            v-bind:href="'https://translate.google.com/#view=home&op=translate&sl=de&tl=en&text=' + selectedWord">
+            Google Translate: {{selectedWord}}
+          </a>
+        </p>
+        <p>
+          <a target="_"
+            v-bind:href="'https://www.google.com/search?q=' + selectedWord + '&tbm=isch'">
+            Image Search: {{selectedWord}}
+          </a>
+        </p>
+
       </div>
     </div>
   </div>
