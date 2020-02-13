@@ -75,7 +75,7 @@ var app = new Vue({
       let knownWords = new Set();
       let lexemes = this.lexemes;
       for (let lexeme of lexemes) {
-        if (lexeme.kind === "word") {
+        if (this.isWord(lexeme) && !this.isIgnored(lexeme)) {
           uniqueWords.add(lexeme.word);
           if (this.isKnown(lexeme)) {
             knownWords.add(lexeme.word);
