@@ -12,6 +12,7 @@
       <keyboard-events v-on:keydown="handleKey"></keyboard-events>
       <small>Unique words: {{countWordsInText.unique}}</small>
       <small>Unknown words: {{countWordsInText.unknown}}</small>
+      <small>Proportion known: {{countWordsInText.percentage}}%</small>
       <textarea class="content-input"
                 placeholder="paste content here"
                 v-model="content"></textarea>

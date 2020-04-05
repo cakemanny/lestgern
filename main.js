@@ -8,6 +8,10 @@ function isAlpha(c) {
   if ("çéâêîôûàèìòùëïü".indexOf(c) != -1) {
     return true;
   }
+  // and ... czech? .... and whatever else
+  if ("áíåóÁÍÅÓæ".indexOf(c) != -1) {
+    return true;
+  }
   return false;
 }
 
@@ -74,17 +78,25 @@ var app = new Vue({
       let uniqueWords = new Set();
       let knownWords = new Set();
       let lexemes = this.lexemes;
+
+      let countNumWords = 0;
+      let countKnownWords = 0;
+
       for (let lexeme of lexemes) {
         if (this.isWord(lexeme) && !this.isIgnored(lexeme)) {
+          countNumWords += 1;
           uniqueWords.add(lexeme.word);
           if (this.isKnown(lexeme)) {
+            countKnownWords += 1;
             knownWords.add(lexeme.word);
           }
         }
       }
+
       return {
         unique: uniqueWords.size,
-        unknown: uniqueWords.size - knownWords.size
+        unknown: uniqueWords.size - knownWords.size,
+        percentage: Math.round(100 * (countKnownWords / countNumWords))
       };
     },
 
