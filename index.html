@@ -8,16 +8,18 @@
   <script src="https://unpkg.com/vue"></script>
 
   <div id="app" class="Grid">
-    <div class="Grid-cell-2">
+    <div class="Grid-cell-2 Column">
       <keyboard-events v-on:keydown="handleKey"></keyboard-events>
-      <small>Unique words: {{countWordsInText.unique}}</small>
-      <small>Unknown words: {{countWordsInText.unknown}}</small>
-      <small>Proportion known: {{countWordsInText.percentage}}%</small>
-      <textarea class="content-input"
+      <div class="stats Column-cell">
+        <small>Unique words: {{countWordsInText.unique}}</small>
+        <small>Unknown words: {{countWordsInText.unknown}}</small>
+        <small>Proportion known: {{countWordsInText.percentage}}%</small>
+      </div>
+      <textarea class="content-input Column-cell"
                 placeholder="paste content here"
                 v-model="content"></textarea>
 
-      <div id="content-interactive">
+      <div class="content-interactive Column-cell-fill">
         <span v-for="(lexeme, index) in lexemes">
           <span v-if="isWord(lexeme)"
                 v-bind:class="{

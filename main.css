@@ -2,6 +2,7 @@
   display: flex;
   /* full-height */
   align-items: stretch;
+  height: 100vh;
 }
 .Grid-cell {
   flex: 1;
@@ -12,6 +13,17 @@
   padding: 8px;
 }
 
+.Column {
+  display: flex;
+  flex-direction: column;
+}
+.Column-cell {
+  flex: 0 0 auto;
+}
+.Column-cell-fill {
+  flex: 1;
+}
+
 body {
   font-family: sans-serif;
   margin: 0;
@@ -20,6 +32,9 @@ body {
 .content-input {
   width: 90%;
   height: 5em;
+}
+.content-interactive {
+  overflow: scroll;
 }
 
 .punc {
