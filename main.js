@@ -34,6 +34,8 @@ Vue.component("keyboard-events", {
 var app = new Vue({
   el: "#app",
   data: {
+    selectedLanguage: "de",
+
     content: "",
 
     hint: "",
@@ -56,15 +58,8 @@ var app = new Vue({
     }
   },
   created: function() {
-    let wbJSON = localStorage.lingc;
-    if (wbJSON) {
-      this.wordBank = JSON.parse(wbJSON);
-    }
-    let savedContent = localStorage.lingc_0_content;
-    if (savedContent) {
-      this.content = savedContent;
-    }
-
+    this.loadWordBank();
+    this.loadContent();
     // TODO: move to sub-component
     this.loadHint();
   },
@@ -248,13 +243,43 @@ var app = new Vue({
       );
     },
 
+    /*
+     * Get the full key for the data storage
+     */
+    storageKey(subkey) {
+      if (!subkey) {
+        throw Error("no subkey");
+      }
+      if (!this.selectedLanguage) {
+        throw Error("No language selected");
+      }
+      return "lestgern_" + this.selectedLanguage + "_" + subkey;
+    },
+
+    loadWordBank() {
+      let wordBankJSON = localStorage[this.storageKey("wordbank")];
+      if (wordBankJSON) {
+        this.wordBank = JSON.parse(wordBankJSON);
+      }
+    },
+
     saveWordBank() {
-      localStorage.lingc = JSON.stringify(this.wordBank);
+      localStorage[this.storageKey("wordbank")] = JSON.stringify(this.wordBank);
+    },
+
+    loadContent() {
+      let savedContent = localStorage[this.storageKey("content")];
+      if (savedContent) {
+        this.content = savedContent;
+      }
     },
 
     saveContent() {
-      if (this.content && this.content !== localStorage.lingc_0_content) {
-        localStorage.lingc_0_content = this.content;
+      if (
+        this.content &&
+        this.content !== localStorage[this.storageKey("content")]
+      ) {
+        localStorage[this.storageKey("content")] = this.content;
       }
     },
 
