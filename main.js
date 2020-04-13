@@ -55,6 +55,39 @@ var app = new Vue({
     },
     ignoredWords: {
       Robert: true
+    },
+    languages: {
+      de: {
+        caseSensitive: true,
+        dictionaries: [
+          {
+            name: "EN Wiktionary",
+            url: word => `https://en.wiktionary.org/wiki/${word}#German`
+          },
+          {
+            name: "Google Translate",
+            url: word =>
+              `https://translate.google.com/#view=home&op=translate&sl=de&tl=en&text=${word}`
+          },
+          {
+            name: "Image Search",
+            url: word => `https://www.google.com/search?q=${word}&tbm=isch`
+          },
+          {
+            name: "DeepL",
+            url: word => `https://www.deepl.com/en/translator#de/en/${word}`
+          }
+        ]
+      },
+      nl: {
+        caseSensitive: false,
+        dictionaries: [
+          {
+            name: "DeepL",
+            url: word => `https://www.deepl.com/en/translator#nl/en/${word}`
+          }
+        ]
+      }
     }
   },
   created: function() {
@@ -209,6 +242,17 @@ var app = new Vue({
         }
       }
       return "";
+    },
+
+    dictionaryLinks() {
+      const dictionaries = this.languages[this.selectedLanguage].dictionaries;
+
+      const computeLink = d => ({
+        name: d.name,
+        url: d.url(this.selectedWord)
+      });
+
+      return [].map.call(dictionaries, computeLink);
     }
   },
   methods: {

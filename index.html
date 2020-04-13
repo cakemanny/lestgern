@@ -65,30 +65,13 @@
                   v-on:click="setFamiliarity(i)"
                   >{{ i }}</button>
         </div>
-        <p>
-          <a target="_"
-            v-bind:href="'https://en.wiktionary.org/wiki/' + selectedWord + '#German'">
-            EN Wiktionary: {{selectedWord}}
-          </a>
-        </p>
-        <p>
-          <a target="_"
-            v-bind:href="'https://translate.google.com/#view=home&op=translate&sl=de&tl=en&text=' + selectedWord">
-            Google Translate: {{selectedWord}}
-          </a>
-        </p>
-        <p>
-          <a target="_"
-            v-bind:href="'https://www.google.com/search?q=' + selectedWord + '&tbm=isch'">
-            Image Search: {{selectedWord}}
-          </a>
-        </p>
-        <p>
-          <a target="_"
-            v-bind:href="'https://www.deepl.com/en/translator#de/en/' + selectedWord">
-            DeepL: {{selectedWord}}
-          </a>
-        </p>
+        <div v-for="dictLink in dictionaryLinks">
+          <p>
+            <a target="_" v-bind:href="dictLink.url">
+              {{dictLink.name}}: {{selectedWord}}
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   </div>
