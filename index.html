@@ -39,7 +39,16 @@
       </div>
     </div>
     <div class="Grid-cell">
-      <small>Count of words in word bank: {{wordCount}}</small>
+      <div class="top-right-row">
+        <small>Count of words in word bank: {{wordCount}}</small>
+        <small class="lang-selection">
+          <button v-for="langCode in ['de', 'nl']"
+                  class="lang"
+                  v-bind:class="{'sel': selectedLanguage == langCode}"
+                  v-on:click="selectLanguage(langCode)"
+            >{{langCode}}</button>
+        </small>
+      </div>
       <div v-if="!selectedWord">
         <h3>Select a word</h3>
       </div>

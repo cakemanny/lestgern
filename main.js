@@ -91,10 +91,12 @@ var app = new Vue({
     }
   },
   created: function() {
+    let storedLang = localStorage.lestgern_lang;
+    if (storedLang && storedLang in this.languages) {
+      this.selectedLanguage = storedLang;
+    }
     this.loadWordBank();
     this.loadContent();
-    // TODO: move to sub-component
-    this.loadHint();
   },
   computed: {
     /* Number  */
@@ -304,6 +306,8 @@ var app = new Vue({
       let wordBankJSON = localStorage[this.storageKey("wordbank")];
       if (wordBankJSON) {
         this.wordBank = JSON.parse(wordBankJSON);
+      } else {
+        this.wordBank = {};
       }
     },
 
@@ -315,6 +319,8 @@ var app = new Vue({
       let savedContent = localStorage[this.storageKey("content")];
       if (savedContent) {
         this.content = savedContent;
+      } else {
+        this.content = "";
       }
     },
 
@@ -325,6 +331,19 @@ var app = new Vue({
       ) {
         localStorage[this.storageKey("content")] = this.content;
       }
+    },
+
+    selectLanguage(langCode) {
+      if (langCode === this.selectedLanguage) {
+        return;
+      }
+      this.selectedLexemeIdx = -1;
+
+      this.selectedLanguage = langCode;
+      localStorage.lestgern_lang = langCode;
+
+      this.loadWordBank();
+      this.loadContent();
     },
 
     selectWord(index) {

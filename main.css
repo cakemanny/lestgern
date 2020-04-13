@@ -36,6 +36,10 @@ body {
 .content-interactive {
   overflow: scroll;
 }
+.top-right-row {
+  display: flex;
+  justify-content: space-between;
+}
 
 .punc {
   color: #636363; /* gray */
@@ -76,4 +80,11 @@ button.fam {
 }
 button.fam.sel {
   background: yellow;
+}
+button.lang {
+  cursor: pointer;
+  background: grey;
+}
+button.lang.sel {
+  background: white;
 }
