@@ -123,10 +123,15 @@ var app = new Vue({
         }
       }
 
+      let percentage = 0;
+      if (countNumWords > 0) {
+        percentage = Math.round(100 * (countKnownWords / countNumWords));
+      }
+
       return {
         unique: uniqueWords.size,
         unknown: uniqueWords.size - knownWords.size,
-        percentage: Math.round(100 * (countKnownWords / countNumWords))
+        percentage: percentage
       };
     },
 
