@@ -1,0 +1,39 @@
+<!doctype html>
+<!--
+  It's not perfect, but this generates the icons for each size
+-->
+<a id="export256">256</a>
+<a id="export128">128</a>
+<a id="export64">64</a>
+<a id="export32">32</a>
+<a id="export16">16</a>
+<br/>
+<canvas id="my-canvas" width="256" height="256" style="width:128px"></canvas>
+<script>
+var canvas = document.getElementById('my-canvas');
+var ctx = canvas.getContext('2d');
+
+function renderIcon(size) {
+  canvas.width = size;
+  canvas.height = size;
+  let half = size / 2;
+  let base = ((25 * size) / 32) | 0;
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = '#00FF00';
+  ctx.fillRect(half, 0, half, size);
+  // use whole pt sizes, as fonts are usually optimized for those
+  ctx.font = '' + Math.round(0.75 * 0.8 * size) + 'pt "Andale Mono"';
+  ctx.fillStyle = 'white';
+  ctx.fillText('l', 0, base, half);
+  ctx.fillStyle = 'black';
+  ctx.fillText('g', half, base, half);
+
+  let a = document.getElementById('export' + size);
+  a.href = canvas.toDataURL('image/png');
+  a.download = 'icon-' + size + '.png'
+}
+for (let size of [16, 32, 64, 128, 256]) {
+  renderIcon(size);
+}
+</script>
