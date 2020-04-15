@@ -31,6 +31,112 @@ Vue.component("keyboard-events", {
   template: `<div style="display:none"></div>`
 });
 
+Vue.component("entry-editor", {
+  props: {
+    word: {
+      type: String,
+      validator: value => !!value
+    },
+    wordBank: Object,
+    familiarity: Number,
+    language: Object
+  },
+  data: function() {
+    return {
+      hint: "",
+      newTag: ""
+    };
+  },
+  created: function() {
+    this.load();
+  },
+  computed: {
+    tags() {
+      let bankEntry = this.wordBank[this.word];
+      if (!bankEntry) {
+        // This is why our add method doesn't seem to work
+        return [];
+      }
+      if (!bankEntry.tags) {
+        bankEntry.tags = [];
+      }
+      return bankEntry.tags;
+    },
+
+    dictionaryLinks() {
+      const dictionaries = this.language.dictionaries;
+
+      const computeLink = d => ({
+        name: d.name,
+        url: d.url(this.word)
+      });
+
+      return [].map.call(dictionaries, computeLink);
+    }
+  },
+  watch: {
+    word: function(value) {
+      // change the hint when the selected word changes
+      this.load();
+    }
+  },
+  methods: {
+    load() {
+      if (this.wordBank[this.word]) {
+        this.hint = this.wordBank[this.word].hint;
+      } else {
+        this.hint = "";
+      }
+      this.newTag = "";
+    },
+
+    blurHint(event) {
+      if (event.key === "Enter") {
+        this.$emit("save-hint", this.hint);
+      } else if (event.key === "Escape") {
+        this.load();
+      } else {
+        // TODO?
+      }
+      event.target.blur();
+      event.preventDefault();
+    }
+  },
+  // TODO: consider changing to v-model.lazy="hint"
+  template: `
+    <div>
+      <h3>{{ word }}</h3>
+      <input type="text" id="hint" class="hint" placeholder="hint"
+        v-model="hint" v-on:keydown.esc="blurHint"
+        v-on:keydown.enter="blurHint" />
+      <ul>
+        <li v-for="tag in tags">
+          {{ tag }}
+          <button v-on:click="$emit('delete-tag', tag)">x</button>
+        </li>
+        <li>
+          <input type="text" placeholder="new tag" v-model="newTag"/>
+          <button v-on:click="$emit('add-tag', newTag)">Add</button>
+        </li>
+      </ul>
+      <div>
+        <button v-for="i in [0,1,2,3,4]"
+                class="fam"
+                v-bind:class="{'sel': familiarity==i}"
+                v-on:click="$emit('set-familiarity', i)"
+                >{{ i }}</button>
+      </div>
+      <template v-for="dictLink in dictionaryLinks">
+        <p>
+          <a target="_" v-bind:href="dictLink.url">
+            {{dictLink.name}}: {{word}}
+          </a>
+        </p>
+      </template>
+    </div>
+  `
+});
+
 var app = new Vue({
   el: "#app",
   data: {
@@ -38,12 +144,8 @@ var app = new Vue({
 
     content: "",
 
-    hint: "",
-    newTag: "",
-
     selectedLexemeIdx: -1,
 
-    // TODO: app lifecycle -> onload -> load from some storage
     wordBank: {
       /* -- Example:
       wird: {
@@ -133,17 +235,6 @@ var app = new Vue({
         unknown: uniqueWords.size - knownWords.size,
         percentage: percentage
       };
-    },
-
-    tags() {
-      let bankEntry = this.wordBank[this.selectedWord];
-      if (!bankEntry) {
-        return [];
-      }
-      if (!bankEntry.tags) {
-        bankEntry.tags = [];
-      }
-      return bankEntry.tags;
     },
 
     lexemes() {
@@ -249,17 +340,6 @@ var app = new Vue({
         }
       }
       return "";
-    },
-
-    dictionaryLinks() {
-      const dictionaries = this.languages[this.selectedLanguage].dictionaries;
-
-      const computeLink = d => ({
-        name: d.name,
-        url: d.url(this.selectedWord)
-      });
-
-      return [].map.call(dictionaries, computeLink);
     }
   },
   methods: {
@@ -282,7 +362,7 @@ var app = new Vue({
       if (this.wordBank.hasOwnProperty(word)) {
         let bankEntry = this.wordBank[word];
         if (typeof bankEntry.familiarity === "undefined") {
-          bankEntry.familiary = 0;
+          bankEntry.familiarity = 0;
         }
         return bankEntry.familiarity;
       }
@@ -356,18 +436,7 @@ var app = new Vue({
       if (!lexeme || !this.isWord(lexeme)) {
         return;
       }
-      if (this.selectedWord && this.hint) {
-        // save old word
-        let wordEntry = this._getOrAdd(this.wordBank, this.selectedWord);
-        if (this.hint !== wordEntry.hint) {
-          wordEntry.hint = this.hint;
-          this.saveWordBank();
-        }
-      }
-
       this.selectedLexemeIdx = index;
-      this.loadHint();
-      this.newTag = "";
     },
 
     handleKey(event) {
@@ -400,7 +469,7 @@ var app = new Vue({
       if ("01234".indexOf(event.key) !== -1) {
         // Seems a bit heavyweight but ...
         let value = JSON.parse(event.key);
-        this.setFamiliarity(value);
+        this.setFamiliarity(this.selectedWord, value);
         event.preventDefault();
         return;
       }
@@ -414,11 +483,6 @@ var app = new Vue({
         /* stop the h being inputted */
         event.preventDefault();
       }
-    },
-
-    blurHint(event) {
-      event.target.blur();
-      event.preventDefault();
     },
 
     selectLeft(event) {
@@ -471,19 +535,9 @@ var app = new Vue({
       }
     },
 
-    loadHint() {
-      if (this.selectedWord) {
-        let word = this.selectedWord;
-        if (this.wordBank[word]) {
-          this.hint = this.wordBank[word].hint;
-          return;
-        }
-      }
-      this.hint = "";
-    },
-
     _getOrAdd(wordBank, word) {
       if (!wordBank[word]) {
+        // TODO: Maybe this should rebuild the wordBank each time?
         wordBank[word] = {
           hint: "",
           tags: [],
@@ -493,13 +547,28 @@ var app = new Vue({
       return wordBank[word];
     },
 
-    addTag() {
-      if (this.selectedWord && this.newTag) {
-        let wordEntry = this._getOrAdd(this.wordBank, this.selectedWord);
+    saveHint(word, hint) {
+      if (word && hint) {
+        let wordEntry = this._getOrAdd(this.wordBank, word);
+        if (hint !== wordEntry.hint) {
+          wordEntry.hint = hint;
+          this.saveWordBank();
+        }
+      }
+    },
 
-        if (!wordEntry.tags.includes(this.newTag)) {
-          // concat so Vue can track the update
-          wordEntry.tags = wordEntry.tags.concat(this.newTag);
+    addTag(word, newTag) {
+      if (word && newTag) {
+        let wordEntry = this._getOrAdd(this.wordBank, word);
+
+        if (!wordEntry.tags) {
+          wordEntry.tags = [];
+        }
+
+        if (!wordEntry.tags.includes(newTag)) {
+          // concat so Vue can track the update ?
+          // TODO: test this theory
+          wordEntry.tags = wordEntry.tags.concat(newTag);
         }
         // temp code to remove dups
         let rebuilt = {};
@@ -512,9 +581,9 @@ var app = new Vue({
       }
     },
 
-    deleteTag(tag) {
-      if (this.selectedWord) {
-        let wordEntry = this._getOrAdd(this.wordBank, this.selectedWord);
+    deleteTag(word, tag) {
+      if (word) {
+        let wordEntry = this._getOrAdd(this.wordBank, word);
         wordEntry.tags = wordEntry.tags.filter(t => t !== tag);
         this.saveWordBank();
       }
@@ -536,9 +605,9 @@ var app = new Vue({
       }
     },
 
-    setFamiliarity(number) {
-      if (this.selectedWord) {
-        let wordEntry = this._getOrAdd(this.wordBank, this.selectedWord);
+    setFamiliarity(word, number) {
+      if (word) {
+        let wordEntry = this._getOrAdd(this.wordBank, word);
         wordEntry.familiarity = number;
         this.saveWordBank();
       }

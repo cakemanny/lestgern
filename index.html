@@ -26,6 +26,12 @@
                 v-model="content"></textarea>
 
       <div class="content-interactive Column-cell-fill">
+        <!-- TODO: try change to template -->
+        <!-- TODO: see if we can calculate the class name
+          v-bind:class="['tab-button', { active: currentTab === tab }]"
+        -->
+        <!-- TODO: see if we can replace v-if with v-bind:is and 3
+          different component types -->
         <span v-for="(lexeme, index) in lexemes">
           <span v-if="isWord(lexeme)"
                 v-bind:class="{
@@ -57,36 +63,17 @@
       <div v-if="!selectedWord">
         <h3>Select a word</h3>
       </div>
-      <div v-if="selectedWord">
-        <h3>{{ selectedWord }}</h3>
-        <input type="text" id="hint" class="hint" placeholder="hint"
-          v-model="hint" v-on:keydown.esc="blurHint"
-          v-on:keydown.enter="blurHint" />
-        <ul>
-          <li v-for="tag in tags">
-            {{ tag }}
-            <button v-on:click="deleteTag(tag)">x</button>
-          </li>
-          <li>
-            <input type="text" placeholder="new tag" v-model="newTag"/>
-            <button v-on:click="addTag()">Add</button>
-          </li>
-        </ul>
-        <div>
-          <button v-for="i in [0,1,2,3,4]"
-                  class="fam"
-                  v-bind:class="{'sel': familiarity(selectedWord)==i}"
-                  v-on:click="setFamiliarity(i)"
-                  >{{ i }}</button>
-        </div>
-        <div v-for="dictLink in dictionaryLinks">
-          <p>
-            <a target="_" v-bind:href="dictLink.url">
-              {{dictLink.name}}: {{selectedWord}}
-            </a>
-          </p>
-        </div>
-      </div>
+      <entry-editor
+        v-if="selectedWord"
+        v-bind:word="selectedWord"
+        v-bind:word-bank="wordBank"
+        v-bind:familiarity="familiarity(selectedWord)"
+        v-bind:language="languages[selectedLanguage]"
+        v-on:add-tag="addTag(selectedWord, $event)"
+        v-on:delete-tag="deleteTag(selectedWord, $event)"
+        v-on:save-hint="saveHint(selectedWord, $event)"
+        v-on:set-familiarity="setFamiliarity(selectedWord, $event)"
+        ></entry-editor>
     </div>
   </div>
   <script src="main.js"></script>
