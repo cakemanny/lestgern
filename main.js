@@ -100,6 +100,11 @@ Vue.component("entry-editor", {
       }
       event.target.blur();
       event.preventDefault();
+    },
+
+    addTag() {
+      this.$emit("add-tag", this.newTag);
+      this.newTag = "";
     }
   },
   // TODO: consider changing to v-model.lazy="hint"
@@ -116,7 +121,7 @@ Vue.component("entry-editor", {
         </li>
         <li>
           <input type="text" placeholder="new tag" v-model="newTag"/>
-          <button v-on:click="$emit('add-tag', newTag)">Add</button>
+          <button v-on:click="addTag">Add</button>
         </li>
       </ul>
       <div>
@@ -353,7 +358,10 @@ var app = new Vue({
       return lexeme.kind === "newline";
     },
     isIgnored(lexeme) {
-      return this.ignoredWords.hasOwnProperty(lexeme.word);
+      return (
+        this.ignoredWords.hasOwnProperty(lexeme.word) &&
+        this.ignoredWords[lexeme.word]
+      );
     },
     isKnown(lexeme) {
       return this.wordBank.hasOwnProperty(lexeme.word);
@@ -476,6 +484,8 @@ var app = new Vue({
     },
 
     focusHint(event) {
+      // TODO: consider using refs:
+      // https://vuejs.org/v2/guide/components-edge-cases.html#Accessing-Child-Component-Instances-amp-Child-Elements
       let hintElem = document.getElementById("hint");
       if (hintElem) {
         hintElem.focus();
@@ -538,11 +548,11 @@ var app = new Vue({
     _getOrAdd(wordBank, word) {
       if (!wordBank[word]) {
         // TODO: Maybe this should rebuild the wordBank each time?
-        wordBank[word] = {
+        Vue.set(wordBank, word, {
           hint: "",
           tags: [],
           familiarity: 0
-        };
+        });
       }
       return wordBank[word];
     },
@@ -566,17 +576,8 @@ var app = new Vue({
         }
 
         if (!wordEntry.tags.includes(newTag)) {
-          // concat so Vue can track the update ?
-          // TODO: test this theory
-          wordEntry.tags = wordEntry.tags.concat(newTag);
+          wordEntry.tags.push(newTag);
         }
-        // temp code to remove dups
-        let rebuilt = {};
-        for (let x of wordEntry.tags) {
-          rebuilt[x] = 1;
-        }
-        wordEntry.tags = Object.keys(rebuilt);
-        //
         this.saveWordBank();
       }
     },
@@ -591,7 +592,7 @@ var app = new Vue({
 
     ignoreWord() {
       if (this.selectedWord) {
-        this.ignoredWords[this.selectedWord] = true;
+        Vue.set(this.ignoredWords, this.selectedWord, true);
         event.stopPropagation();
         event.preventDefault();
       }
@@ -599,7 +600,8 @@ var app = new Vue({
 
     unIgnoreWord(event) {
       if (this.selectedWord) {
-        delete this.ignoredWords[this.selectedWord];
+        // trigger change for Vue
+        Vue.set(this.ignoredWords, this.selectedWord, false);
         event.stopPropagation();
         event.preventDefault();
       }
