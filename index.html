@@ -34,18 +34,20 @@
           different component types -->
         <span v-for="(lexeme, index) in lexemes">
           <span v-if="isWord(lexeme)"
-                v-bind:class="{
-                               'known-word-0': familiarity(lexeme.word)==0,
-                               'known-word-1': familiarity(lexeme.word)==1,
-                               'known-word-2': familiarity(lexeme.word)==2,
-                               'known-word-3': familiarity(lexeme.word)==3,
-                               'known-word-4': familiarity(lexeme.word)>3,
-                               'selected-word': index==selectedLexemeIdx,
-                               'new-word': isNew(lexeme)}"
-                v-on:click="selectWord(index)"
+                key="word"
                 class="word"
-                >{{ lexeme.word }}</span><span v-if="isPunc(lexeme)" class="punc"
-                >{{ lexeme.word }}</span><br v-if="isNewline(lexeme)" class="newline"/>
+                v-bind:class="['known-word-' + familiarity(lexeme.word), {
+                              'selected-word': index == selectedLexemeIdx,
+                              'new-word': isNew(lexeme)}]"
+                v-on:click="selectWord(index)"
+              >{{ lexeme.word }}</span><span
+                v-else-if="isPunc(lexeme)"
+                key="punc"
+                class="punc"
+              >{{ lexeme.word }}</span><br
+                v-else-if="isNewline(lexeme)"
+                key="newline"
+                class="newline"/>
         </span>
       </div>
     </div>
