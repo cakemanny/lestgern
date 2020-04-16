@@ -125,6 +125,7 @@ Vue.component("entry-editor", {
         </li>
       </ul>
       <div>
+        <!-- TODO: add spacing for mobile!! -->
         <button v-for="i in [0,1,2,3,4]"
                 class="fam"
                 v-bind:class="{'sel': familiarity==i}"
@@ -174,7 +175,8 @@ Vue.component("lexeme-row", {
               v-bind:data-index="lexeme.index"
             >{{ lexeme.word }}</span><span
               v-else-if="isPunc(lexeme)"
-            >{{ lexeme.word }}</span>
+            >{{ lexeme.word }}</span><br
+              v-else-if="isNewline"/>
       </template>
     </div>
   `
