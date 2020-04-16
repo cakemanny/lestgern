@@ -156,7 +156,7 @@ Vue.component("lexeme-row", {
       let result = [];
       if (lexeme.isNew) {
         result.push("new-word");
-      } else if (lexeme.familiarity) {
+      } else if (typeof lexeme.familiarity === "number") {
         result.push("known-word-" + lexeme.familiarity);
       }
       if (lexeme.isSelected) {
