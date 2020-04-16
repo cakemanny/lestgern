@@ -142,6 +142,44 @@ Vue.component("entry-editor", {
   `
 });
 
+Vue.component("lexeme-row", {
+  props: {
+    isWord: Function,
+    isPunc: Function,
+    isNewline: Function,
+    familiarity: Number,
+    isNew: Boolean,
+    row: Object
+  },
+  methods: {
+    wordClasses(lexeme) {
+      let result = [];
+      if (lexeme.isNew) {
+        result.push("new-word");
+      } else if (lexeme.familiarity) {
+        result.push("known-word-" + lexeme.familiarity);
+      }
+      if (lexeme.isSelected) {
+        result.push("selected-word");
+      }
+      return result;
+    }
+  },
+  template: `
+    <div>
+      <template v-for="lexeme in row.lexemes">
+        <span v-if="isWord(lexeme)"
+              class="word"
+              v-bind:class="wordClasses(lexeme)"
+              v-bind:data-index="lexeme.index"
+            >{{ lexeme.word }}</span><span
+              v-else-if="isPunc(lexeme)"
+            >{{ lexeme.word }}</span>
+      </template>
+    </div>
+  `
+});
+
 var app = new Vue({
   el: "#app",
   data: {
@@ -313,15 +351,15 @@ var app = new Vue({
       // add the final word
       theWords.push(currentWord);
 
-      const theLexemes = theWords.map(word => {
+      const theLexemes = theWords.map((word, index) => {
         // want "word", "punctuation", "space"... I think
         const c0 = word.charAt(0);
         if (isAlpha(c0)) {
-          return { kind: "word", word: word };
+          return { kind: "word", word, index };
         } else if (c0 == "\n") {
-          return { kind: "newline" };
+          return { kind: "newline", index };
         } else {
-          return { kind: "punc", word: word };
+          return { kind: "punc", word, index };
         }
       });
 
@@ -329,6 +367,59 @@ var app = new Vue({
       this.saveContent();
 
       return theLexemes;
+    },
+
+    groupedLexemes() {
+      function newRow() {
+        return {
+          // containsSelectedWord: false,
+          lexemes: []
+        };
+      }
+
+      let rows = [];
+      let currentRow = newRow();
+      for (let lexeme of this.lexemes) {
+        currentRow.lexemes.push(
+          Object.assign({}, lexeme, {
+            // isSelected: false,
+            isNew: this.isNew(lexeme),
+            familiarity: lexeme.word && this.familiarity(lexeme.word)
+          })
+        );
+
+        if (this.isNewline(lexeme)) {
+          rows.push(currentRow);
+          currentRow = newRow();
+        }
+      }
+      rows.push(currentRow);
+
+      return rows;
+    },
+
+    groupedLexemesWithSelection() {
+      let rows = [].slice.call(this.groupedLexemes);
+
+      for (let i in rows) {
+        for (let j in rows[i].lexemes) {
+          let row = rows[i];
+          let lexeme = row.lexemes[j];
+          let isSelected = lexeme.index == this.selectedLexemeIdx;
+
+          if (isSelected) {
+            // we have to make sure to change the identity of the parts that
+            // change and not the parts that don't
+            let newLexemes = [].slice.call(row.lexemes);
+            newLexemes[j] = Object.assign({}, lexeme, { isSelected });
+            rows[i] = Object.assign({}, row, {
+              containsSelectedWord: true,
+              lexemes: newLexemes
+            });
+          }
+        }
+      }
+      return rows;
     },
 
     selectedWord() {
@@ -556,7 +647,6 @@ var app = new Vue({
 
     _getOrAdd(wordBank, word) {
       if (!wordBank[word]) {
-        // TODO: Maybe this should rebuild the wordBank each time?
         Vue.set(wordBank, word, {
           hint: "",
           tags: [],

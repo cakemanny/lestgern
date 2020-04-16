@@ -11,7 +11,7 @@
   <link rel="icon" href="icons/icon-32.png" sizes="32x32" />
   <link rel="icon" href="icons/icon-16.png" sizes="16x16" />
   <link href=main.css rel=stylesheet>
-  <script src="https://unpkg.com/vue@^2/dist/vue.min.js"></script>
+  <script src="https://unpkg.com/vue@2.6.11/dist/vue.min.js"></script>
 
   <div id="app" class="Grid">
     <div class="Grid-cell-2 Column">
@@ -28,21 +28,14 @@
       <div class="content-interactive Column-cell-fill"
            v-on:click="handleLexemeClick"
         >
-        <!-- TODO: see if we can replace v-if with v-bind:is and 3
-          different component types -->
-        <span v-for="(lexeme, index) in lexemes">
-          <span v-if="isWord(lexeme)"
-                class="word"
-                v-bind:class="['known-word-' + familiarity(lexeme.word), {
-                              'selected-word': index == selectedLexemeIdx,
-                              'new-word': isNew(lexeme)}]"
-                v-bind:data-index="index"
-              >{{ lexeme.word }}</span><span
-                v-else-if="isPunc(lexeme)"
-                class="punc"
-              >{{ lexeme.word }}</span><br
-                v-else-if="isNewline(lexeme)"
-                class="newline"/>
+        <!-- this things we have to do for performance -->
+        <span v-for="row in groupedLexemesWithSelection">
+          <lexeme-row
+            v-bind:row="row"
+            v-bind:is-word="isWord"
+            v-bind:is-punc="isPunc"
+            v-bind:is-newline="isNewline"
+            ></lexeme-row>
         </span>
       </div>
     </div>

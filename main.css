@@ -35,18 +35,15 @@ body {
 }
 .content-interactive {
   overflow: scroll;
+  color: #636363; /* gray */
 }
 .top-right-row {
   display: flex;
   justify-content: space-between;
 }
 
-.punc {
-  color: #636363; /* gray */
-}
 .word {
   cursor: pointer;
-  color: #636363; /* gray */
 }
 .new-word {
   background: #d7e8ff;
