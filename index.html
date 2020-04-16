@@ -11,7 +11,7 @@
   <link rel="icon" href="icons/icon-32.png" sizes="32x32" />
   <link rel="icon" href="icons/icon-16.png" sizes="16x16" />
   <link href=main.css rel=stylesheet>
-  <script src="https://unpkg.com/vue"></script>
+  <script src="https://unpkg.com/vue@^2/dist/vue.min.js"></script>
 
   <div id="app" class="Grid">
     <div class="Grid-cell-2 Column">
@@ -25,28 +25,23 @@
                 placeholder="paste content here"
                 v-model="content"></textarea>
 
-      <div class="content-interactive Column-cell-fill">
-        <!-- TODO: try change to template -->
-        <!-- TODO: see if we can calculate the class name
-          v-bind:class="['tab-button', { active: currentTab === tab }]"
-        -->
+      <div class="content-interactive Column-cell-fill"
+           v-on:click="handleLexemeClick"
+        >
         <!-- TODO: see if we can replace v-if with v-bind:is and 3
           different component types -->
         <span v-for="(lexeme, index) in lexemes">
           <span v-if="isWord(lexeme)"
-                key="word"
                 class="word"
                 v-bind:class="['known-word-' + familiarity(lexeme.word), {
                               'selected-word': index == selectedLexemeIdx,
                               'new-word': isNew(lexeme)}]"
-                v-on:click="selectWord(index)"
+                v-bind:data-index="index"
               >{{ lexeme.word }}</span><span
                 v-else-if="isPunc(lexeme)"
-                key="punc"
                 class="punc"
               >{{ lexeme.word }}</span><br
                 v-else-if="isNewline(lexeme)"
-                key="newline"
                 class="newline"/>
         </span>
       </div>

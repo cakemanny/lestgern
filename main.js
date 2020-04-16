@@ -447,6 +447,15 @@ var app = new Vue({
       this.selectedLexemeIdx = index;
     },
 
+    handleLexemeClick(event) {
+      // use one click handler that is not bound to the instance rather than
+      // potentially a handler for each lexeme
+      if (event && event.target && event.target.dataset["index"]) {
+        const index = event.target.dataset["index"] | 0;
+        this.selectWord(index);
+      }
+    },
+
     handleKey(event) {
       if (event.metaKey || event.ctrlKey || event.altKey) {
         // These are not for us.
