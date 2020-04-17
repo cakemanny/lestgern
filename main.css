@@ -90,6 +90,3 @@ button.lang.sel {
 .sound-preview {
   cursor: pointer;
 }
-.sound-preview--playing {
-  cursor: default;
-}
