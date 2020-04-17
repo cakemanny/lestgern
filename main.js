@@ -815,7 +815,7 @@ var app = new Vue({
       if (this.selectedLexemeIdx > 0) {
         let idx = this.selectedLexemeIdx;
         let lexemes = this.lexemes;
-        while (idx >= 0) {
+        while (idx > 0) {
           idx -= 1;
           if (this.isWord(lexemes[idx])) {
             this.selectWord(idx);
@@ -831,15 +831,13 @@ var app = new Vue({
       let lexemes = this.lexemes;
       let idx = this.selectedLexemeIdx;
       let len = lexemes.length;
-      if (idx < len - 1) {
-        while (idx < len) {
-          idx += 1;
-          if (this.isWord(lexemes[idx])) {
-            this.selectWord(idx);
-            event.stopPropagation();
-            event.preventDefault();
-            return;
-          }
+      while (idx < len - 1) {
+        idx += 1;
+        if (this.isWord(lexemes[idx])) {
+          this.selectWord(idx);
+          event.stopPropagation();
+          event.preventDefault();
+          return;
         }
       }
     },
@@ -848,15 +846,13 @@ var app = new Vue({
       let lexemes = this.lexemes;
       let idx = this.selectedLexemeIdx;
       let len = lexemes.length;
-      if (idx < len - 1) {
-        while (idx < len) {
-          idx += 1;
-          if (this.isNew(lexemes[idx])) {
-            this.selectWord(idx);
-            event.stopPropagation();
-            event.preventDefault();
-            return;
-          }
+      while (idx < len - 1) {
+        idx += 1;
+        if (this.isNew(lexemes[idx])) {
+          this.selectWord(idx);
+          event.stopPropagation();
+          event.preventDefault();
+          return;
         }
       }
     },
