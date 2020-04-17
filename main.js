@@ -175,6 +175,10 @@ Vue.component("entry-editor", {
       event.preventDefault();
     },
 
+    handleBlur() {
+      this.$emit("save-hint", this.hint);
+    },
+
     addTag() {
       this.$emit("add-tag", this.newTag);
       this.newTag = "";
@@ -189,7 +193,7 @@ Vue.component("entry-editor", {
       </h3>
       <input type="text" id="hint" class="hint" placeholder="hint"
         v-model="hint" v-on:keydown.esc="blurHint"
-        v-on:keydown.enter="blurHint" />
+        v-on:keydown.enter="blurHint" v-on:blur="handleBlur" />
       <ul>
         <li v-for="tag in tags">
           {{ tag }}
@@ -258,6 +262,81 @@ Vue.component("lexeme-row", {
   `
 });
 
+Vue.component("help-view", {
+  data: function() {
+    return {
+      keyHelp: [
+        ["←", "Select the previous word"],
+        ["→", "Select the next word"],
+        ["b", "Select next blue word"],
+        ["x", "Ignore selected word"],
+        ["X", "Unignore selected word"],
+        ["h", "Focus on the hint box"],
+        ["enter", "Save the hint"],
+        ["esc", "Cancel editing the hint"],
+        ["0,1,2,3,4", "Set word familiarity"]
+      ]
+    };
+  },
+  methods: {
+    handleBackgroundClick(event) {
+      if (event.target.className === "help-view") {
+        this.$emit("close-help");
+        event.stopPropagation();
+      }
+    }
+  },
+  template: `
+    <div class="help-view" v-on:click="handleBackgroundClick">
+      <div class="help-view__container">
+        <button
+          class="help-view__close"
+          type="button"
+          alt="close"
+          v-on:click="$emit('close-help')">✖</button>
+        <h2>Help</h2>
+        <h3>Getting Started</h3>
+        <ol>
+          <li>
+            Paste an article or page from a book into the content box
+          </li>
+          <li>Read a sentence</li>
+          <li>
+            Select a word you are unfamiliar with
+          </li>
+          <li>
+            Use the lookup links to try to understand the word
+          </li>
+          <li>
+            Write down a hint in the hint box
+          </li>
+          <li>
+            Repeat until you understand the sentence
+          </li>
+          <li>Mark any known words as level 4 familiarity</li>
+          <li>
+            Repeat until you understand the article/page
+          </li>
+          <li>
+            As you continue to use the app, when you see a word in yellow,
+            you will know that you have come across the word before.
+            Selecting the word will show the hint.
+            Increase the word's familiarity as it starts to become more
+            familiar.
+          </li>
+        </ol>
+        <h3>Keyboard Shortcuts</h3>
+        <table>
+          <tr v-for="keyRow in keyHelp">
+            <td><kbd>{{ keyRow[0] }}</kbd></td>
+            <td>{{ keyRow[1] }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  `
+});
+
 var app = new Vue({
   el: "#app",
   data: {
@@ -266,6 +345,8 @@ var app = new Vue({
     content: "",
 
     selectedLexemeIdx: -1,
+
+    helpDisplayed: false,
 
     wordBank: {
       /* -- Example:
@@ -666,7 +747,11 @@ var app = new Vue({
         // TODO: focus tag entry
       }
       if (event.key === "f") {
+        // or K in vim mode?
         // TODO: open first dictionary
+      }
+      if (event.key === "?") {
+        this.showHelp();
       }
       if ("01234".indexOf(event.key) !== -1) {
         // Seems a bit heavyweight but ...
@@ -675,6 +760,14 @@ var app = new Vue({
         event.preventDefault();
         return;
       }
+    },
+
+    showHelp() {
+      this.helpDisplayed = true;
+    },
+
+    closeHelp() {
+      this.helpDisplayed = false;
     },
 
     focusHint(event) {

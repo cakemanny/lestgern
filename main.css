@@ -37,10 +37,6 @@ body {
   overflow: scroll;
   color: #636363; /* gray */
 }
-.top-right-row {
-  display: flex;
-  justify-content: space-between;
-}
 
 .word {
   cursor: pointer;
@@ -67,8 +63,25 @@ body {
   color: black;
 }
 
+.top-right-row {
+  display: flex;
+  justify-content: space-between;
+}
+.help-icon {
+  cursor: pointer;
+}
+
+button.lang {
+  cursor: pointer;
+  background: grey;
+}
+button.lang.sel {
+  background: white;
+}
+
+/* entry-editor */
 input.hint {
-  width: 90%;
+  width: calc(100% - 1em);
 }
 
 button.fam {
@@ -78,15 +91,47 @@ button.fam {
 button.fam.sel {
   background: yellow;
 }
-button.lang {
-  cursor: pointer;
-  background: grey;
-}
-button.lang.sel {
-  background: white;
-}
 
 /* sound-preview */
 .sound-preview {
   cursor: pointer;
+}
+
+/* help-view */
+.help-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+}
+.help-view__container {
+  /* would be good to know how to do this in relation to  */
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  padding: 1em;
+  height: calc(100vh - 2em);
+  background: white;
+  box-shadow: 0 0 0.5em black;
+  overflow: scroll;
+}
+.help-view__close {
+  position: absolute;
+  top: 1em;
+  right: 1em;
+}
+
+/* transitions */
+.slide-down-enter-active {
+  transition: all 0.3s ease;
+}
+.slide-down-leave-active {
+  transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1);
+}
+.slide-down-enter,
+.slide-down-leave-to {
+  transform: translateY(-10px);
+  opacity: 0;
 }

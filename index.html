@@ -13,57 +13,68 @@
   <link href=main.css rel=stylesheet>
   <script src="https://unpkg.com/vue@2.6.11/dist/vue.min.js"></script>
 
-  <div id="app" class="Grid">
-    <div class="Grid-cell-2 Column">
-      <keyboard-events v-on:keydown="handleKey"></keyboard-events>
-      <div class="stats Column-cell">
-        <small>Unique words: {{countWordsInText.unique}}</small>
-        <small>Unknown words: {{countWordsInText.unknown}}</small>
-        <small>Proportion known: {{countWordsInText.percentage}}%</small>
-      </div>
-      <textarea class="content-input Column-cell"
-                placeholder="paste content here"
-                v-model="content"></textarea>
+  <div id="app">
+    <transition name="slide-down">
+      <help-view
+        v-if="helpDisplayed"
+        v-on:close-help="closeHelp"
+        ></help-view>
+    </transition>
+    <div class="Grid">
+      <div class="Grid-cell-2 Column">
+        <keyboard-events v-on:keydown="handleKey"></keyboard-events>
+        <div class="stats Column-cell">
+          <small>Unique words: {{countWordsInText.unique}}</small>
+          <small>Unknown words: {{countWordsInText.unknown}}</small>
+          <small>Proportion known: {{countWordsInText.percentage}}%</small>
+        </div>
+        <textarea class="content-input Column-cell"
+                  placeholder="paste content here"
+                  v-model="content"></textarea>
 
-      <div class="content-interactive Column-cell-fill"
-           v-on:click="handleLexemeClick"
-        >
-        <!-- this things we have to do for performance -->
-        <span v-for="row in groupedLexemesWithSelection">
-          <lexeme-row
-            v-bind:row="row"
-            v-bind:is-word="isWord"
-            v-bind:is-punc="isPunc"
-            v-bind:is-newline="isNewline"
-            ></lexeme-row>
-        </span>
+        <div class="content-interactive Column-cell-fill"
+             v-on:click="handleLexemeClick"
+          >
+          <!-- this things we have to do for performance -->
+          <span v-for="row in groupedLexemesWithSelection">
+            <lexeme-row
+              v-bind:row="row"
+              v-bind:is-word="isWord"
+              v-bind:is-punc="isPunc"
+              v-bind:is-newline="isNewline"
+              ></lexeme-row>
+          </span>
+        </div>
       </div>
-    </div>
-    <div class="Grid-cell">
-      <div class="top-right-row">
-        <small>Words in word bank: {{wordCount}}</small>
-        <small class="lang-selection">
-          <button v-for="langCode in ['de', 'nl']"
-                  class="lang"
-                  v-bind:class="{'sel': selectedLanguage == langCode}"
-                  v-on:click="selectLanguage(langCode)"
-            >{{langCode}}</button>
-        </small>
+      <div class="Grid-cell">
+        <div class="top-right-row">
+          <small>Words in word bank: {{wordCount}}</small>
+          <small>
+            <a href="#" v-on:click="showHelp">Help</a>
+          </small>
+          <small class="lang-selection">
+            <button v-for="langCode in ['de', 'nl']"
+                    class="lang"
+                    v-bind:class="{'sel': selectedLanguage == langCode}"
+                    v-on:click="selectLanguage(langCode)"
+              >{{langCode}}</button>
+          </small>
+        </div>
+        <div v-if="!selectedWord">
+          <h3>Select a word</h3>
+        </div>
+        <entry-editor
+          v-if="selectedWord"
+          v-bind:word="selectedWord"
+          v-bind:word-bank="wordBank"
+          v-bind:familiarity="familiarity(selectedWord)"
+          v-bind:language="languages[selectedLanguage]"
+          v-on:add-tag="addTag(selectedWord, $event)"
+          v-on:delete-tag="deleteTag(selectedWord, $event)"
+          v-on:save-hint="saveHint(selectedWord, $event)"
+          v-on:set-familiarity="setFamiliarity(selectedWord, $event)"
+          ></entry-editor>
       </div>
-      <div v-if="!selectedWord">
-        <h3>Select a word</h3>
-      </div>
-      <entry-editor
-        v-if="selectedWord"
-        v-bind:word="selectedWord"
-        v-bind:word-bank="wordBank"
-        v-bind:familiarity="familiarity(selectedWord)"
-        v-bind:language="languages[selectedLanguage]"
-        v-on:add-tag="addTag(selectedWord, $event)"
-        v-on:delete-tag="deleteTag(selectedWord, $event)"
-        v-on:save-hint="saveHint(selectedWord, $event)"
-        v-on:set-familiarity="setFamiliarity(selectedWord, $event)"
-        ></entry-editor>
     </div>
   </div>
   <script src="main.js"></script>
