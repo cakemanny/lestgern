@@ -85,3 +85,11 @@ button.lang {
 button.lang.sel {
   background: white;
 }
+
+/* sound-preview */
+.sound-preview {
+  cursor: pointer;
+}
+.sound-preview--playing {
+  cursor: default;
+}

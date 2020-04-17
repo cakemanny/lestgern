@@ -31,6 +31,79 @@ Vue.component("keyboard-events", {
   template: `<div style="display:none"></div>`
 });
 
+Vue.component("sound-preview", {
+  props: {
+    text: String,
+    lang: String
+  },
+  created: function() {
+    if (window.speechSynthesis) {
+      // FIXME: this will break if there is ever more than one of these at a
+      // time
+      window.speechSynthesis.onvoiceschanged = () => {
+        this.voices = window.speechSynthesis.getVoices();
+      };
+    }
+  },
+  data: function() {
+    return {
+      voices: window.speechSynthesis ? window.speechSynthesis.getVoices() : [],
+      playing: false
+    };
+  },
+  methods: {
+    speak() {
+      const utterance = new SpeechSynthesisUtterance();
+      utterance.text = this.text;
+
+      // There may be a better way to choose the appropriate language
+      const voices = this.voicesForLang();
+      const remoteDefault = voices.filter(v => v.default && !v.localService)[0];
+      const remote = voices.filter(v => !v.default && !v.localService)[0];
+      const localDefault = voices.filter(v => v.default && v.localService)[0];
+      const localOther = voices.filter(v => !v.default && v.localService)[0];
+      utterance.voice = remoteDefault || remote || localDefault || localOther;
+
+      utterance.onstart = () => {
+        this.playing = true;
+      };
+      utterance.onend = () => {
+        this.playing = false;
+      };
+      utterance.onerror = () => {
+        this.playing = false;
+      };
+
+      window.speechSynthesis.speak(utterance);
+    },
+
+    voicesForLang() {
+      // This obviously doesn't work in general. But might be ok what languages
+      // we are supporting...
+      return this.voices.filter(v => v.lang.startsWith(this.lang));
+    }
+  },
+  computed: {
+    hasSpeechSynthesis() {
+      if (this.voicesForLang().length > 0) {
+        return true;
+      }
+      return false;
+    }
+  },
+  template: `
+    <span v-if="hasSpeechSynthesis" class="sound-preview">
+      <span
+        v-if="playing"
+        >🔊</span>
+      <span
+        v-else
+        v-on:click="speak"
+        >🔈</span>
+    </span>
+  `
+});
+
 Vue.component("entry-editor", {
   props: {
     word: {
@@ -110,7 +183,10 @@ Vue.component("entry-editor", {
   // TODO: consider changing to v-model.lazy="hint"
   template: `
     <div>
-      <h3>{{ word }}</h3>
+      <h3>
+        {{ word }}
+        <sound-preview v-bind:text="word" v-bind:lang="language.bcp47code"/>
+      </h3>
       <input type="text" id="hint" class="hint" placeholder="hint"
         v-model="hint" v-on:keydown.esc="blurHint"
         v-on:keydown.enter="blurHint" />
@@ -205,6 +281,7 @@ var app = new Vue({
     },
     languages: {
       de: {
+        bcp47code: "de-DE",
         caseSensitive: true,
         dictionaries: [
           {
@@ -227,6 +304,7 @@ var app = new Vue({
         ]
       },
       nl: {
+        bcp47code: "nl-NL", // sorry nl-BE
         caseSensitive: false,
         dictionaries: [
           {
@@ -559,22 +637,36 @@ var app = new Vue({
       // https://www.lingq.com/en/forum/open-forum/a-guide-to-keyboard-shortcuts/
 
       if (event.key === "ArrowLeft") {
+        // Change to b to make like vim?
         return this.selectLeft(event);
       }
       if (event.key === "ArrowRight") {
+        // Change to w to make like vim?
         return this.selectRight(event);
       }
       if (event.key === "h") {
         return this.focusHint(event);
       }
       if (event.key === "b") {
+        // ? maybe change this to
         return this.selectNextNewWord(event);
       }
+      if (event.key === "B") {
+        // TODO: previous new word?
+      }
+      // TODO: next yellow word? y for yellow?
+      // TODO: some sort or jump to next & prev paragraph
       if (event.key === "x") {
         return this.ignoreWord(event);
       }
       if (event.key === "X") {
         return this.unIgnoreWord(event);
+      }
+      if (event.key === "t") {
+        // TODO: focus tag entry
+      }
+      if (event.key === "f") {
+        // TODO: open first dictionary
       }
       if ("01234".indexOf(event.key) !== -1) {
         // Seems a bit heavyweight but ...
