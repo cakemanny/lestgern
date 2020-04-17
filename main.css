@@ -80,7 +80,7 @@ button.lang.sel {
 }
 
 /* entry-editor */
-input.hint {
+.entry-editor__hint {
   width: calc(100% - 1em);
 }
 
@@ -90,6 +90,14 @@ button.fam {
 }
 button.fam.sel {
   background: yellow;
+}
+.entry-editor__new-tag-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+.entry-editor__new-tag-input {
+  width: 10em;
+  flex: 1 1;
 }
 
 /* sound-preview */

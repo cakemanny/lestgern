@@ -163,6 +163,10 @@ Vue.component("entry-editor", {
       this.newTag = "";
     },
 
+    focusHint() {
+      this.$refs.hintInput.focus();
+    },
+
     blurHint(event) {
       if (event.key === "Enter") {
         this.$emit("save-hint", this.hint);
@@ -179,6 +183,10 @@ Vue.component("entry-editor", {
       this.$emit("save-hint", this.hint);
     },
 
+    focusTag() {
+      this.$refs.newTagInput.focus();
+    },
+
     addTag() {
       this.$emit("add-tag", this.newTag);
       this.newTag = "";
@@ -191,17 +199,32 @@ Vue.component("entry-editor", {
         {{ word }}
         <sound-preview v-bind:text="word" v-bind:lang="language.bcp47code"/>
       </h3>
-      <input type="text" id="hint" class="hint" placeholder="hint"
-        v-model="hint" v-on:keydown.esc="blurHint"
-        v-on:keydown.enter="blurHint" v-on:blur="handleBlur" />
+      <input type="text"
+        id="hint"
+        ref="hintInput"
+        class="entry-editor__hint"
+        placeholder="hint"
+        v-model="hint"
+        v-on:keydown.esc="blurHint"
+        v-on:keydown.enter="blurHint"
+        v-on:blur="handleBlur" />
       <ul>
         <li v-for="tag in tags">
           {{ tag }}
-          <button v-on:click="$emit('delete-tag', tag)">x</button>
+          <button v-on:click="$emit('delete-tag', tag)">✖</button>
         </li>
         <li>
-          <input type="text" placeholder="new tag" v-model="newTag"/>
-          <button v-on:click="addTag">Add</button>
+          <div class="entry-editor__new-tag-container">
+            <input type="text"
+              placeholder="new tag"
+              class="entry-editor__new-tag-input"
+              v-model="newTag"
+              v-on:keydown.enter.prevent="addTag"
+              v-on:keydown.esc.prevent="$event.target.blur()"
+              ref="newTagInput"
+            />
+            <button v-on:click="addTag">Add</button>
+          </div>
         </li>
       </ul>
       <div>
@@ -272,9 +295,10 @@ Vue.component("help-view", {
         ["x", "Ignore selected word"],
         ["X", "Unignore selected word"],
         ["h", "Focus on the hint box"],
-        ["enter", "Save the hint"],
-        ["esc", "Cancel editing the hint"],
-        ["0,1,2,3,4", "Set word familiarity"]
+        ["enter", "Save the hint / add the tag"],
+        ["esc", "Cancel editing the hint / tag"],
+        ["0,1,2,3,4", "Set word familiarity"],
+        ["t", "Focus on the tag box"]
       ]
     };
   },
@@ -744,7 +768,7 @@ var app = new Vue({
         return this.unIgnoreWord(event);
       }
       if (event.key === "t") {
-        // TODO: focus tag entry
+        return this.focusTag(event);
       }
       if (event.key === "f") {
         // or K in vim mode?
@@ -771,13 +795,18 @@ var app = new Vue({
     },
 
     focusHint(event) {
-      // TODO: consider using refs:
-      // https://vuejs.org/v2/guide/components-edge-cases.html#Accessing-Child-Component-Instances-amp-Child-Elements
-      let hintElem = document.getElementById("hint");
-      if (hintElem) {
-        hintElem.focus();
+      if (this.$refs.editor) {
+        this.$refs.editor.focusHint();
         event.stopPropagation();
         /* stop the h being inputted */
+        event.preventDefault();
+      }
+    },
+
+    focusTag(event) {
+      if (this.$refs.editor) {
+        this.$refs.editor.focusTag();
+        event.stopPropagation();
         event.preventDefault();
       }
     },
