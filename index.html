@@ -28,13 +28,15 @@
           <small>Unknown words: {{countWordsInText.unknown}}</small>
           <small>Proportion known: {{countWordsInText.percentage}}%</small>
         </div>
-        <textarea class="content-input Column-cell"
-                  placeholder="paste content here"
-                  v-model="content"></textarea>
-
-        <div class="content-interactive Column-cell-fill"
-             v-on:click="handleLexemeClick"
-          >
+        <textarea
+          class="content-input Column-cell"
+          placeholder="paste content here"
+          v-model="content"
+          ></textarea>
+        <div
+          class="content-interactive Column-cell-fill"
+          v-on:click="handleLexemeClick"
+        >
           <!-- this things we have to do for performance -->
           <span v-for="row in groupedLexemesWithSelection">
             <lexeme-row
@@ -53,10 +55,11 @@
             <a href="#" v-on:click="showHelp">Help</a>
           </small>
           <small class="lang-selection">
-            <button v-for="langCode in ['de', 'nl']"
-                    class="lang"
-                    v-bind:class="{'sel': selectedLanguage == langCode}"
-                    v-on:click="selectLanguage(langCode)"
+            <button
+              v-for="langCode in ['de', 'nl']"
+              class="lang"
+              v-bind:class="{'lang--selected': selectedLanguage == langCode}"
+              v-on:click="selectLanguage(langCode)"
               >{{langCode}}</button>
           </small>
         </div>

@@ -38,6 +38,10 @@ body {
   color: #636363; /* gray */
 }
 
+/*
+ * We're not going full BEM with these since they can be so numerous.
+ * Having shorter class names should reduce memory and improve speed
+ */
 .word {
   cursor: pointer;
 }
@@ -67,15 +71,12 @@ body {
   display: flex;
   justify-content: space-between;
 }
-.help-icon {
-  cursor: pointer;
-}
 
 button.lang {
   cursor: pointer;
   background: grey;
 }
-button.lang.sel {
+button.lang--selected {
   background: white;
 }
 
@@ -83,12 +84,11 @@ button.lang.sel {
 .entry-editor__hint {
   width: calc(100% - 1em);
 }
-
-button.fam {
+.entry-editor__familiarirty {
   cursor: pointer;
   background: #ffffaf;
 }
-button.fam.sel {
+.entry-editor__familiarirty--selected {
   background: yellow;
 }
 .entry-editor__new-tag-container {

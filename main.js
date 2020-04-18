@@ -93,13 +93,8 @@ Vue.component("sound-preview", {
   },
   template: `
     <span v-if="hasSpeechSynthesis" class="sound-preview">
-      <span
-        v-if="playing"
-        >🔊</span>
-      <span
-        v-else
-        v-on:click="speak"
-        >🔈</span>
+      <span v-if="playing">🔊</span>
+      <span v-else v-on:click="speak">🔈</span>
     </span>
   `
 });
@@ -172,8 +167,6 @@ Vue.component("entry-editor", {
         this.$emit("save-hint", this.hint);
       } else if (event.key === "Escape") {
         this.load();
-      } else {
-        // TODO?
       }
       event.target.blur();
       event.preventDefault();
@@ -192,7 +185,6 @@ Vue.component("entry-editor", {
       this.newTag = "";
     }
   },
-  // TODO: consider changing to v-model.lazy="hint"
   template: `
     <div>
       <h3>
@@ -229,16 +221,17 @@ Vue.component("entry-editor", {
       </ul>
       <div>
         <!-- TODO: add spacing for mobile!! -->
-        <button v-for="i in [0,1,2,3,4]"
-                class="fam"
-                v-bind:class="{'sel': familiarity==i}"
-                v-on:click="$emit('set-familiarity', i)"
-                >{{ i }}</button>
+        <button
+          v-for="i in [0,1,2,3,4]"
+          class="entry-editor__familiarity"
+          v-bind:class="{'entry-editor__familiarity--selected': familiarity==i}"
+          v-on:click="$emit('set-familiarity', i)"
+          >{{ i }}</button>
       </div>
       <template v-for="dictLink in dictionaryLinks">
         <p>
           <a target="_" v-bind:href="dictLink.url">
-            {{dictLink.name}}: {{word}}
+            {{ dictLink.name }}: {{ word }}
           </a>
         </p>
       </template>
@@ -269,17 +262,20 @@ Vue.component("lexeme-row", {
       return result;
     }
   },
+  // This is formatted oddly so that we don't end up with whitespace between
+  // the spans
   template: `
     <div>
       <template v-for="lexeme in row.lexemes">
-        <span v-if="isWord(lexeme)"
-              class="word"
-              v-bind:class="wordClasses(lexeme)"
-              v-bind:data-index="lexeme.index"
-            >{{ lexeme.word }}</span><span
-              v-else-if="isPunc(lexeme)"
-            >{{ lexeme.word }}</span><br
-              v-else-if="isNewline"/>
+        <span
+          v-if="isWord(lexeme)"
+          class="word"
+          v-bind:class="wordClasses(lexeme)"
+          v-bind:data-index="lexeme.index"
+        >{{ lexeme.word }}</span><span
+          v-else-if="isPunc(lexeme)"
+        >{{ lexeme.word }}</span><br
+          v-else-if="isNewline"/>
       </template>
     </div>
   `
@@ -317,30 +313,19 @@ Vue.component("help-view", {
           class="help-view__close"
           type="button"
           alt="close"
-          v-on:click="$emit('close-help')">✖</button>
+          v-on:click="$emit('close-help')"
+          >✖</button>
         <h2>Help</h2>
         <h3>Getting Started</h3>
         <ol>
-          <li>
-            Paste an article or page from a book into the content box
-          </li>
+          <li>Paste an article or page from a book into the content box</li>
           <li>Read a sentence</li>
-          <li>
-            Select a word you are unfamiliar with
-          </li>
-          <li>
-            Use the lookup links to try to understand the word
-          </li>
-          <li>
-            Write down a hint in the hint box
-          </li>
-          <li>
-            Repeat until you understand the sentence
-          </li>
+          <li>Select a word you are unfamiliar with</li>
+          <li>Use the lookup links to try to understand the word</li>
+          <li>Write down a hint in the hint box</li>
+          <li>Repeat until you understand the sentence</li>
           <li>Mark any known words as level 4 familiarity</li>
-          <li>
-            Repeat until you understand the article/page
-          </li>
+          <li>Repeat until you understand the article/page</li>
           <li>
             As you continue to use the app, when you see a word in yellow,
             you will know that you have come across the word before.
