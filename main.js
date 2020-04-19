@@ -1,3 +1,6 @@
+/* global Vue */
+"use strict";
+
 function isAlpha(c) {
   if (c >= "a" && c <= "z") return true;
   if (c >= "A" && c <= "Z") return true;
@@ -143,7 +146,7 @@ Vue.component("entry-editor", {
     }
   },
   watch: {
-    word: function(value) {
+    word: function() {
       // change the hint when the selected word changes
       this.load();
     }
@@ -346,7 +349,7 @@ Vue.component("help-view", {
   `
 });
 
-var app = new Vue({
+window.app = new Vue({
   el: "#app",
   data: {
     selectedLanguage: "de",
@@ -619,16 +622,13 @@ var app = new Vue({
       return lexeme.kind === "newline";
     },
     isIgnored(lexeme) {
-      return (
-        this.ignoredWords.hasOwnProperty(lexeme.word) &&
-        this.ignoredWords[lexeme.word]
-      );
+      return this.ignoredWords[lexeme.word] === true;
     },
     isKnown(lexeme) {
-      return this.wordBank.hasOwnProperty(lexeme.word);
+      return Object.prototype.hasOwnProperty.call(this.wordBank, lexeme.word);
     },
     familiarity(word) {
-      if (this.wordBank.hasOwnProperty(word)) {
+      if (Object.prototype.hasOwnProperty.call(this.wordBank, word)) {
         let bankEntry = this.wordBank[word];
         if (typeof bankEntry.familiarity === "undefined") {
           bankEntry.familiarity = 0;
