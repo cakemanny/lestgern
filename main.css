@@ -84,11 +84,11 @@ button.lang--selected {
 .entry-editor__hint {
   width: calc(100% - 1em);
 }
-.entry-editor__familiarirty {
+.entry-editor__familiarity {
   cursor: pointer;
   background: #ffffaf;
 }
-.entry-editor__familiarirty--selected {
+.entry-editor__familiarity--selected {
   background: yellow;
 }
 .entry-editor__new-tag-container {
