@@ -423,32 +423,24 @@ window.app = new Vue({
     },
 
     countWordsInText() {
-      let uniqueWords = new Set();
-      let knownWords = new Set();
-      let lexemes = this.lexemes;
+      const nonIgnoredWords = this.lexemes.filter(
+        lexeme => this.isWord(lexeme) && !this.isIgnored(lexeme)
+      );
 
-      let countNumWords = 0;
-      let countKnownWords = 0;
+      const countNumWords = nonIgnoredWords.length;
+      const knownWords = nonIgnoredWords.filter(this.isKnown);
 
-      for (let lexeme of lexemes) {
-        if (this.isWord(lexeme) && !this.isIgnored(lexeme)) {
-          countNumWords += 1;
-          uniqueWords.add(lexeme.word);
-          if (this.isKnown(lexeme)) {
-            countKnownWords += 1;
-            knownWords.add(lexeme.word);
-          }
-        }
-      }
+      const uniqueWords = new Set(nonIgnoredWords);
+      const uniqueKnownWords = new Set(knownWords);
 
-      let percentage = 0;
-      if (countNumWords > 0) {
-        percentage = Math.round(100 * (countKnownWords / countNumWords));
-      }
+      const percentage =
+        countNumWords > 0
+          ? Math.round(100 * (knownWords.length / countNumWords))
+          : 0;
 
       return {
         unique: uniqueWords.size,
-        unknown: uniqueWords.size - knownWords.size,
+        unknown: uniqueWords.size - uniqueKnownWords.size,
         percentage: percentage
       };
     },
@@ -572,27 +564,29 @@ window.app = new Vue({
     },
 
     groupedLexemesWithSelection() {
-      let rows = [].slice.call(this.groupedLexemes);
+      return this.groupedLexemes.map(row => {
+        const containsSelectedLexeme =
+          row.lexemes.length > 0 &&
+          row.lexemes[0].index <= this.selectedLexemeIdx &&
+          this.selectedLexemeIdx <= row.lexemes[row.lexemes.length - 1].index;
 
-      for (let i in rows) {
-        for (let j in rows[i].lexemes) {
-          let row = rows[i];
-          let lexeme = row.lexemes[j];
-          let isSelected = lexeme.index == this.selectedLexemeIdx;
-
-          if (isSelected) {
-            // we have to make sure to change the identity of the parts that
-            // change and not the parts that don't
-            let newLexemes = [].slice.call(row.lexemes);
-            newLexemes[j] = Object.assign({}, lexeme, { isSelected });
-            rows[i] = Object.assign({}, row, {
-              containsSelectedWord: true,
-              lexemes: newLexemes
-            });
-          }
+        if (containsSelectedLexeme) {
+          const newLexemes = row.lexemes.map(lexeme => {
+            const isSelected = lexeme.index === this.selectedLexemeIdx;
+            if (isSelected) {
+              return Object.assign({}, lexeme, { isSelected: true });
+            } else {
+              return lexeme;
+            }
+          });
+          return Object.assign({}, row, {
+            containsSelectedWord: true,
+            lexemes: newLexemes
+          });
+        } else {
+          return row;
         }
-      }
-      return rows;
+      });
     },
 
     selectedWord() {
