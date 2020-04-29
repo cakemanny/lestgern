@@ -14,6 +14,7 @@
 - [ ] export data
 - [ ] save data to Dropbox / Google cloud if have token
     - use cloud function to make the OAuth work?
+- [x] add dict.cc for german
 
 ## To Consider
 - [x] Add [TTS](https://wicg.github.io/speech-api/#tts-section)

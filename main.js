@@ -393,6 +393,10 @@ window.app = new Vue({
           {
             name: "DeepL",
             url: word => `https://www.deepl.com/en/translator#de/en/${word}`
+          },
+          {
+            name: "dict.cc",
+            url: word => `https://de-en.dict.cc/?s=${word}`
           }
         ]
       },
