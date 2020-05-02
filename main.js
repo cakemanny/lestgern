@@ -56,6 +56,11 @@ Vue.component("sound-preview", {
   },
   methods: {
     speak() {
+      // Have found that the remote engine can never play and jam the whole
+      // queue up.  If the user has clicked again, then we don't care about
+      // previous requests completing
+      window.speechSynthesis.cancel();
+
       const utterance = new SpeechSynthesisUtterance();
       utterance.text = this.text;
 
