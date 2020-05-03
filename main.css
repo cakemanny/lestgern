@@ -99,6 +99,9 @@ button.lang--selected {
   width: 10em;
   flex: 1 1;
 }
+.entry-editor__fav {
+  font-size: 60%;
+}
 
 /* sound-preview */
 .sound-preview {

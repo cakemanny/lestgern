@@ -144,7 +144,8 @@ Vue.component("entry-editor", {
 
       const computeLink = d => ({
         name: d.name,
-        url: d.url(this.word)
+        url: d.url(this.word),
+        isFavourite: !!d.isFavourite
       });
 
       return [].map.call(dictionaries, computeLink);
@@ -241,6 +242,9 @@ Vue.component("entry-editor", {
           <a target="_" v-bind:href="dictLink.url">
             {{ dictLink.name }}: {{ word }}
           </a>
+          <!-- TODO: make these buttons -->
+          <span class="entry-editor__fav" v-if="dictLink.isFavourite">♥</span>
+          <span class="entry-editor__fav" v-else>♡</span>
         </p>
       </template>
     </div>
@@ -397,7 +401,8 @@ window.app = new Vue({
           },
           {
             name: "DeepL",
-            url: word => `https://www.deepl.com/en/translator#de/en/${word}`
+            url: word => `https://www.deepl.com/en/translator#de/en/${word}`,
+            isFavourite: true
           },
           {
             name: "dict.cc",
@@ -760,7 +765,7 @@ window.app = new Vue({
       }
       if (event.key === "f") {
         // or K in vim mode?
-        // TODO: open first dictionary
+        return this.openFavouriteDict(event);
       }
       if (event.key === "?") {
         this.showHelp();
@@ -797,6 +802,22 @@ window.app = new Vue({
         event.stopPropagation();
         event.preventDefault();
       }
+    },
+
+    openFavouriteDict(event) {
+      if (!this.selectedWord) {
+        return;
+      }
+      const lang = this.languages[this.selectedLanguage];
+      const favDict = lang.dictionaries
+        .filter(d => d.isFavourite)
+        .concat(lang.dictionaries)[0];
+
+      const url = favDict.url(this.selectedWord);
+      window.open(url, "_");
+
+      event.stopPropagation();
+      event.preventDefault();
     },
 
     selectLeft(event) {

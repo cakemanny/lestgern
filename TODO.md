@@ -1,10 +1,10 @@
 
-- [ ] Add help screen
+- [x] Add help screen
 - [ ] Add more NL dictionaries
 - [ ] Custom dicts
 - [ ] get case sensitivity working properly
 - [ ] Animations / better phone layout
-- [ ] think of another way to save hints on phone
+- [x] think of another way to save hints on phone
 - [ ] Screen to view words by tags
 - [ ] display other words with tag
 - [ ] screen to word bank in general
