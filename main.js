@@ -12,7 +12,7 @@ function isAlpha(c) {
     return true;
   }
   // and ... czech? .... and whatever else
-  if ("áíåóÁÍÅÓæ".indexOf(c) != -1) {
+  if ("áíåóÁÍÅÓæñ".indexOf(c) != -1) {
     return true;
   }
   return false;
@@ -297,12 +297,14 @@ Vue.component("help-view", {
   data: function() {
     return {
       keyHelp: [
-        ["←", "Select the previous word"],
-        ["→", "Select the next word"],
+        ["←,h", "Select the previous word"],
+        ["→,l", "Select the next word"],
         ["b", "Select next blue word"],
+        ["y", "Select next yellow word"],
         ["x", "Ignore selected word"],
         ["X", "Unignore selected word"],
-        ["h", "Focus on the hint box"],
+        ["H", "Focus on the hint box"],
+        ["K,f", "Open favourite dictionary"],
         ["enter", "Save the hint / add the tag"],
         ["esc", "Cancel editing the hint / tag"],
         ["0,1,2,3,4", "Set word familiarity"],
@@ -415,8 +417,31 @@ window.app = new Vue({
         caseSensitive: false,
         dictionaries: [
           {
+            name: "Glosbe",
+            url: word => `https://en.glosbe.com/nl/en/${word}`,
+            isFavourite: true
+          },
+          {
+            name: "EN Wiktionary",
+            url: word => `https://en.wiktionary.org/wiki/${word}#Dutch`
+          },
+          {
             name: "DeepL",
             url: word => `https://www.deepl.com/en/translator#nl/en/${word}`
+          },
+          {
+            name: "Image Search",
+            url: word => `https://www.google.com/search?q=${word}&tbm=isch`
+          },
+          {
+            name: "Van Dale",
+            url: word =>
+              `https://www.vandale.nl/gratis-woordenboek/nederlands-engels/vertaling/${word}`
+          },
+          {
+            name: "MWB",
+            url: word =>
+              `https://www.mijnwoordenboek.nl/vertalen.php?src=NL&des=EN&woord=${word}`
           }
         ]
       }
@@ -613,6 +638,9 @@ window.app = new Vue({
 
         const lexeme = lexemes[idx];
         if (this.isWord(lexeme)) {
+          if (!this.languages[this.selectedLanguage].caseSensitive) {
+            return lexeme.word.toLowerCase();
+          }
           return lexeme.word;
         }
       }
@@ -731,18 +759,15 @@ window.app = new Vue({
         return;
       }
 
-      // TODO: Add some more of these:
-      // https://www.lingq.com/en/forum/open-forum/a-guide-to-keyboard-shortcuts/
-
-      if (event.key === "ArrowLeft") {
+      if (event.key === "ArrowLeft" || event.key === "h") {
         // Change to b to make like vim?
         return this.selectLeft(event);
       }
-      if (event.key === "ArrowRight") {
+      if (event.key === "ArrowRight" || event.key === "l") {
         // Change to w to make like vim?
         return this.selectRight(event);
       }
-      if (event.key === "h") {
+      if (event.key === "H") {
         return this.focusHint(event);
       }
       if (event.key === "b") {
@@ -752,7 +777,12 @@ window.app = new Vue({
       if (event.key === "B") {
         // TODO: previous new word?
       }
-      // TODO: next yellow word? y for yellow?
+      if (event.key === "y") {
+        return this.selectNextYellowWord(event);
+      }
+      if (event.key === "Y") {
+        // TODO: previous yellow word?
+      }
       // TODO: some sort or jump to next & prev paragraph
       if (event.key === "x") {
         return this.ignoreWord(event);
@@ -763,7 +793,7 @@ window.app = new Vue({
       if (event.key === "t") {
         return this.focusTag(event);
       }
-      if (event.key === "f") {
+      if (event.key === "K" || event.key === "f") {
         // or K in vim mode?
         return this.openFavouriteDict(event);
       }
@@ -862,6 +892,24 @@ window.app = new Vue({
           event.stopPropagation();
           event.preventDefault();
           return;
+        }
+      }
+    },
+
+    selectNextYellowWord(event) {
+      let lexemes = this.lexemes;
+      let idx = this.selectedLexemeIdx;
+      let len = lexemes.length;
+      while (idx < len - 1) {
+        idx += 1;
+        if (this.isWord(lexemes[idx])) {
+          const familiarity = this.familiarity(lexemes[idx].word);
+          if (familiarity !== null && familiarity < 4) {
+            this.selectWord(idx);
+            event.stopPropagation();
+            event.preventDefault();
+            return;
+          }
         }
       }
     },
