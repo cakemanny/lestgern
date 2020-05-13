@@ -303,12 +303,13 @@ Vue.component("help-view", {
         ["y", "Select next yellow word"],
         ["x", "Ignore selected word"],
         ["X", "Unignore selected word"],
-        ["H", "Focus on the hint box"],
+        ["H,g", "Focus on the hint box"],
         ["K,f", "Open favourite dictionary"],
         ["enter", "Save the hint / add the tag"],
         ["esc", "Cancel editing the hint / tag"],
         ["0,1,2,3,4", "Set word familiarity"],
-        ["t", "Focus on the tag box"]
+        ["t", "Focus on the tag box"],
+        ["?", "Show this help"]
       ]
     };
   },
@@ -588,7 +589,8 @@ window.app = new Vue({
           Object.assign({}, lexeme, {
             // isSelected: false,
             isNew: this.isNew(lexeme),
-            familiarity: lexeme.word && this.familiarity(lexeme.word)
+            familiarity:
+              lexeme.word && this.familiarity(this.normalise(lexeme.word))
           })
         );
 
@@ -658,10 +660,12 @@ window.app = new Vue({
       return lexeme.kind === "newline";
     },
     isIgnored(lexeme) {
-      return this.ignoredWords[lexeme.word] === true;
+      const word = this.normalise(lexeme.word);
+      return this.ignoredWords[word] === true;
     },
     isKnown(lexeme) {
-      return Object.prototype.hasOwnProperty.call(this.wordBank, lexeme.word);
+      const word = this.normalise(lexeme.word);
+      return Object.prototype.hasOwnProperty.call(this.wordBank, word);
     },
     familiarity(word) {
       if (Object.prototype.hasOwnProperty.call(this.wordBank, word)) {
@@ -677,6 +681,13 @@ window.app = new Vue({
       return (
         this.isWord(lexeme) && !this.isKnown(lexeme) && !this.isIgnored(lexeme)
       );
+    },
+    normalise(word) {
+      const lang = this.languages[this.selectedLanguage];
+      if (lang.caseSensitive) {
+        return word;
+      }
+      return word.toLowerCase();
     },
 
     /*
@@ -767,7 +778,7 @@ window.app = new Vue({
         // Change to w to make like vim?
         return this.selectRight(event);
       }
-      if (event.key === "H") {
+      if (event.key === "H" || event.key === "g") {
         return this.focusHint(event);
       }
       if (event.key === "b") {
@@ -903,7 +914,9 @@ window.app = new Vue({
       while (idx < len - 1) {
         idx += 1;
         if (this.isWord(lexemes[idx])) {
-          const familiarity = this.familiarity(lexemes[idx].word);
+          const familiarity = this.familiarity(
+            this.normalise(lexemes[idx].word)
+          );
           if (familiarity !== null && familiarity < 4) {
             this.selectWord(idx);
             event.stopPropagation();
