@@ -410,6 +410,10 @@ window.app = new Vue({
           {
             name: "dict.cc",
             url: word => `https://de-en.dict.cc/?s=${word}`
+          },
+          {
+            name: "Forvo (pronunciation)",
+            url: word => `https://forvo.com/search/${word}/de/`
           }
         ]
       },
@@ -443,6 +447,10 @@ window.app = new Vue({
             name: "MWB",
             url: word =>
               `https://www.mijnwoordenboek.nl/vertalen.php?src=NL&des=EN&woord=${word}`
+          },
+          {
+            name: "Forvo (pronunciation)",
+            url: word => `https://forvo.com/search/${word}/nl/`
           }
         ]
       }
