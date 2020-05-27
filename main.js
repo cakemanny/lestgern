@@ -394,6 +394,10 @@ window.app = new Vue({
             url: word => `https://en.wiktionary.org/wiki/${word}#German`
           },
           {
+            name: "DE Wiktionary",
+            url: word => `https://de.wiktionary.org/wiki/${word}#Deutsch`
+          },
+          {
             name: "Google Translate",
             url: word =>
               `https://translate.google.com/#view=home&op=translate&sl=de&tl=en&text=${word}`
@@ -414,6 +418,10 @@ window.app = new Vue({
           {
             name: "Forvo (pronunciation)",
             url: word => `https://forvo.com/search/${word}/de/`
+          },
+          {
+            name: "DWDS",
+            url: word => `https://dwds.de/?q=${word}`
           }
         ]
       },
