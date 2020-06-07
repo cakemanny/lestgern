@@ -2,7 +2,7 @@
 - [x] Add help screen
 - [ ] Add more NL dictionaries
 - [ ] Custom dicts
-- [ ] get case sensitivity working properly
+- [x] get case sensitivity working properly
 - [ ] Animations / better phone layout
 - [x] think of another way to save hints on phone
 - [ ] Screen to view words by tags

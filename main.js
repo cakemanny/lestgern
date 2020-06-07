@@ -486,8 +486,9 @@ window.app = new Vue({
       const countNumWords = nonIgnoredWords.length;
       const knownWords = nonIgnoredWords.filter(this.isKnown);
 
-      const uniqueWords = new Set(nonIgnoredWords);
-      const uniqueKnownWords = new Set(knownWords);
+      console.log(nonIgnoredWords);
+      const uniqueWords = new Set(nonIgnoredWords.map(l => l.word));
+      const uniqueKnownWords = new Set(knownWords.map(l => l.word));
 
       const percentage =
         countNumWords > 0
