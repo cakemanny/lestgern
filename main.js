@@ -486,7 +486,6 @@ window.app = new Vue({
       const countNumWords = nonIgnoredWords.length;
       const knownWords = nonIgnoredWords.filter(this.isKnown);
 
-      console.log(nonIgnoredWords);
       const uniqueWords = new Set(nonIgnoredWords.map(l => l.word));
       const uniqueKnownWords = new Set(knownWords.map(l => l.word));
 
