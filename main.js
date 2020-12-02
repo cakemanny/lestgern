@@ -12,7 +12,7 @@ function isAlpha(c) {
     return true;
   }
   // and ... czech? .... and whatever else
-  if ("áíåóÁÍÅÓæñ".indexOf(c) != -1) {
+  if ("áíåóÁÍÅÓæñł".indexOf(c) != -1) {
     return true;
   }
   return false;
