@@ -12,7 +12,11 @@ function isAlpha(c) {
     return true;
   }
   // and ... czech? .... and whatever else
-  if ("áíåóÁÍÅÓæñł".indexOf(c) != -1) {
+  if ("áíåóÁÍÅÓæñ".indexOf(c) != -1) {
+    return true;
+  }
+  // polish :)
+  if ("łśąćżźęńŁŚĄĆŻŹĘŃ".indexOf(c) != -1) {
     return true;
   }
   return false;
@@ -459,6 +463,28 @@ window.app = new Vue({
           {
             name: "Forvo (pronunciation)",
             url: word => `https://forvo.com/search/${word}/nl/`
+          }
+        ]
+      },
+      pl: {
+        bcp47code: "pl-PL",
+        caseSensitive: false,
+        dictionaries: [
+          {
+            name: "EN Wiktionary",
+            url: word => `https://en.wiktionary.org/wiki/${word}#Polish`
+          },
+          {
+            name: "DeepL",
+            url: word => `https://www.deepl.com/en/translator#pl/en/${word}`
+          },
+          {
+            name: "Image Search",
+            url: word => `https://www.google.com/search?q=${word}&tbm=isch`
+          },
+          {
+            name: "Forvo (pronunciation)",
+            url: word => `https://forvo.com/search/${word}/pl/`
           }
         ]
       }

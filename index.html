@@ -56,7 +56,7 @@
           </small>
           <small class="lang-selection">
             <button
-              v-for="langCode in ['de', 'nl']"
+              v-for="langCode in ['de', 'nl', 'pl']"
               class="lang"
               v-bind:class="{'lang--selected': selectedLanguage == langCode}"
               v-on:click="selectLanguage(langCode)"
