@@ -485,6 +485,11 @@ window.app = new Vue({
           {
             name: "Forvo (pronunciation)",
             url: word => `https://forvo.com/search/${word}/pl/`
+          },
+          {
+            name: "Edict.pl",
+            url: word => `https://edict.pl/dict?word=${word}`,
+            isFavourite: true
           }
         ]
       }
