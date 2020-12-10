@@ -16,7 +16,7 @@ function isAlpha(c) {
     return true;
   }
   // polish :)
-  if ("łśąćżźęńŁŚĄĆŻŹĘŃ".indexOf(c) != -1) {
+  if ("ćńśźżłóąęĆŃŚŹŻŁÓĄĘ".indexOf(c) != -1) {
     return true;
   }
   return false;
