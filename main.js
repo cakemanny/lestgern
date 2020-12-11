@@ -476,7 +476,8 @@ window.app = new Vue({
           },
           {
             name: "DeepL",
-            url: word => `https://www.deepl.com/en/translator#pl/en/${word}`
+            url: word => `https://www.deepl.com/en/translator#pl/en/${word}`,
+            isFavourite: true
           },
           {
             name: "Image Search",
@@ -488,8 +489,7 @@ window.app = new Vue({
           },
           {
             name: "Edict.pl",
-            url: word => `https://edict.pl/dict?word=${word}`,
-            isFavourite: true
+            url: word => `https://edict.pl/dict?word=${word}`
           }
         ]
       }
