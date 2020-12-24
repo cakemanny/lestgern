@@ -484,6 +484,10 @@ window.app = new Vue({
             url: word => `https://www.google.com/search?q=${word}&tbm=isch`
           },
           {
+            name: "dict.cc",
+            url: word => `https://pl-en.dict.cc/?s=${word}`
+          },
+          {
             name: "Forvo (pronunciation)",
             url: word => `https://forvo.com/search/${word}/pl/`
           },
