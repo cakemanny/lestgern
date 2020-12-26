@@ -475,6 +475,15 @@ window.app = new Vue({
             url: word => `https://en.wiktionary.org/wiki/${word}#Polish`
           },
           {
+            name: "EN Wiktionary (links)",
+            url: word =>
+              `https://en.wiktionary.org/wiki/Special:WhatLinksHere/${word}`
+          },
+          {
+            name: "PL Wiktionary",
+            url: word => `https://pl.wiktionary.org/wiki/${word}#Polish`
+          },
+          {
             name: "DeepL",
             url: word => `https://www.deepl.com/en/translator#pl/en/${word}`,
             isFavourite: true
