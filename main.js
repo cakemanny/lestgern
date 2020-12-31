@@ -493,8 +493,9 @@ window.app = new Vue({
             url: word => `https://www.google.com/search?q=${word}&tbm=isch`
           },
           {
-            name: "dict.cc",
-            url: word => `https://pl-en.dict.cc/?s=${word}`
+            name: "Reverso Context ",
+            url: word =>
+              `https://context.reverso.net/translation/polish-english/${word}`
           },
           {
             name: "Forvo (pronunciation)",
@@ -503,6 +504,14 @@ window.app = new Vue({
           {
             name: "Edict.pl",
             url: word => `https://edict.pl/dict?word=${word}`
+          },
+          {
+            name: "WSJP",
+            url: word => `https://www.wsjp.pl/index.php?szukaj=${word}`
+          },
+          {
+            name: "PWN",
+            url: word => `https://sjp.pwn.pl/szukaj/${word}.html`
           }
         ]
       }
