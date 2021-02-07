@@ -146,10 +146,11 @@ Vue.component("entry-editor", {
     dictionaryLinks() {
       const dictionaries = this.language.dictionaries;
 
-      const computeLink = d => ({
+      const computeLink = (d, idx) => ({
         name: d.name,
         url: d.url(this.word),
-        isFavourite: !!d.isFavourite
+        isFavourite: !!d.isFavourite,
+        idx
       });
 
       return [].map.call(dictionaries, computeLink);
@@ -247,8 +248,15 @@ Vue.component("entry-editor", {
             {{ dictLink.name }}: {{ word }}
           </a>
           <!-- TODO: make these buttons -->
-          <span class="entry-editor__fav" v-if="dictLink.isFavourite">♥</span>
-          <span class="entry-editor__fav" v-else>♡</span>
+          <span
+            class="entry-editor__fav"
+            v-if="dictLink.isFavourite"
+            >♥</span>
+          <span
+            class="entry-editor__fav"
+            v-else
+            v-on:click="$emit('set-favourite-dict', dictLink.idx)"
+            >♡</span>
         </p>
       </template>
     </div>
@@ -472,7 +480,8 @@ window.app = new Vue({
         dictionaries: [
           {
             name: "EN Wiktionary",
-            url: word => `https://en.wiktionary.org/wiki/${word}#Polish`
+            url: word => `https://en.wiktionary.org/wiki/${word}#Polish`,
+            isFavourite: true
           },
           {
             name: "EN Wiktionary (links)",
@@ -485,8 +494,7 @@ window.app = new Vue({
           },
           {
             name: "DeepL",
-            url: word => `https://www.deepl.com/en/translator#pl/en/${word}`,
-            isFavourite: true
+            url: word => `https://www.deepl.com/en/translator#pl/en/${word}`
           },
           {
             name: "Image Search",
@@ -925,6 +933,20 @@ window.app = new Vue({
 
       const url = favDict.url(this.selectedWord);
       window.open(url, "_");
+
+      event.stopPropagation();
+      event.preventDefault();
+    },
+
+    setFavouriteDict(idx) {
+      const lang = this.languages[this.selectedLanguage];
+      if (idx < 0 || idx >= lang.dictionaries.length) {
+        return;
+      }
+      lang.dictionaries = lang.dictionaries.map((d, i) => {
+        d.isFavourite = i === idx;
+        return d;
+      });
 
       event.stopPropagation();
       event.preventDefault();
