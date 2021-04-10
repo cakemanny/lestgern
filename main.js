@@ -26,7 +26,7 @@ Vue.component("keyboard-events", {
   created: function() {
     const component = this;
     this.handler = function(e) {
-      if (event.target.localName === "body") {
+      if (e.target.localName === "body") {
         component.$emit("keydown", e);
       }
     };
@@ -194,9 +194,12 @@ Vue.component("entry-editor", {
       this.$refs.newTagInput.focus();
     },
 
-    addTag() {
+    addTag(event) {
       this.$emit("add-tag", this.newTag);
       this.newTag = "";
+      // This could be annoying but reaching for ESC after entering a tag
+      // is more painful. Hitting t for each tag isn't too hard.
+      event.target.blur();
     }
   },
   template: `
@@ -947,9 +950,6 @@ window.app = new Vue({
         d.isFavourite = i === idx;
         return d;
       });
-
-      event.stopPropagation();
-      event.preventDefault();
     },
 
     selectLeft(event) {
@@ -1062,7 +1062,7 @@ window.app = new Vue({
       }
     },
 
-    ignoreWord() {
+    ignoreWord(event) {
       if (this.selectedWord) {
         Vue.set(this.ignoredWords, this.selectedWord, true);
         event.stopPropagation();
