@@ -88,9 +88,11 @@ button.lang--selected {
 .entry-editor__familiarity {
   cursor: pointer;
   background: #ffffaf;
+  border: 1px solid silver;
 }
 .entry-editor__familiarity--selected {
   background: yellow;
+  border: 1px solid black;
 }
 .entry-editor__new-tag-container {
   display: flex;
