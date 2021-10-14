@@ -518,7 +518,7 @@ window.app = new Vue({
           },
           {
             name: "WSJP",
-            url: word => `https://www.wsjp.pl/index.php?szukaj=${word}`
+            url: word => `https://www.wsjp.pl/szukaj/podstawowe/wyniki?szukaj=${word}`
           },
           {
             name: "PWN",
