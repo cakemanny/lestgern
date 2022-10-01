@@ -1,6 +1,8 @@
 /* global Vue */
 "use strict";
 
+const DROPBOX_CLIENT_ID = 'cov7r6oc1yyd5ra';
+
 function isAlpha(c) {
   if (c >= "a" && c <= "z") return true;
   if (c >= "A" && c <= "Z") return true;
@@ -526,7 +528,13 @@ window.app = new Vue({
           }
         ]
       }
-    }
+    },
+    auth: {
+      dropbox: {
+        state: "none",
+        tokenData: null,
+      }
+    },
   },
   created: function() {
     let storedLang = localStorage.lestgern_lang;
@@ -535,6 +543,8 @@ window.app = new Vue({
     }
     this.loadWordBank();
     this.loadContent();
+
+    this.checkAndHandleOAuth2Code();
   },
   computed: {
     /* Number  */
@@ -906,6 +916,140 @@ window.app = new Vue({
 
     closeHelp() {
       this.helpDisplayed = false;
+    },
+
+    async loginAtDropbox() {
+      event.stopPropagation();
+      event.preventDefault();
+
+      async function sha256_base64encoded(message) {
+          // encode as UTF-8
+          const msgBuffer = new TextEncoder("utf-8").encode(message);
+          const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        return btoa(String.fromCharCode.apply(null,
+            new Uint8Array(hashBuffer)))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+      }
+
+      // This needs to be between 43 and 128 characters
+      // Two UUIDs seems sufficient. 36 x 2
+      const codeVerifier = crypto.randomUUID() + crypto.randomUUID();
+      sessionStorage.lestgern_dbx_code_verifier = codeVerifier;
+
+      const codeChallenge = await sha256_base64encoded(codeVerifier);
+
+      const redirectURI = window.location.href;
+
+      // TODO: should we add state ?
+
+      const dropboxAuthURL = "https://www.dropbox.com/oauth2/authorize" +
+        `?client_id=${DROPBOX_CLIENT_ID}` +
+        "&response_type=code" +
+        `&redirect_uri=${redirectURI}` +
+        `&code_challenge=${codeChallenge}` +
+        "&code_challenge_method=S256"
+
+      window.location = dropboxAuthURL;
+    },
+
+    checkAndHandleOAuth2Code() {
+      const oauth2Code = new URL(window.location.href).searchParams.get('code');
+      if (oauth2Code) {
+        this.handleOAuth2Code(oauth2Code)
+      }
+      // TODO: check for error and do something with it
+      const oauth2error = new URL(window.location.href).searchParams.get('error');
+      if (oauth2error) {
+        this.auth.dropbox.state = "failed";
+        let cleanedURL = new URL(window.location.href);
+        cleanedURL.searchParams.delete('error');
+        cleanedURL.searchParams.delete('error_summary');
+        window.history.replaceState(null, null, cleanedURL);
+      }
+
+      if (sessionStorage.lestgern_dbx_oauth_access) {
+        // TODO: check if token is valid
+        this.auth.dropbox.tokenData = JSON.parse(
+          sessionStorage.lestgern_dbx_oauth_access
+        );
+        this.auth.dropbox.state = 'success';
+      }
+    },
+
+    handleOAuth2Code(oauth2Code) {
+      function redactURL() {
+        let codeRemovedURL = new URL(window.location.href);
+        codeRemovedURL.searchParams.delete('code');
+        window.history.replaceState(null, null, codeRemovedURL);
+      }
+      redactURL();
+
+      const codeVerifier = sessionStorage.lestgern_dbx_code_verifier;
+      if (!codeVerifier) {
+        console.warn('no lestgern_dbx_code_verifier in sessionStorage');
+        return;
+      }
+
+      // Dropbox's OAuth 2.0 endpoint for requesting an access token
+      const oauth2Endpoint = 'https://api.dropbox.com/oauth2/token';
+
+      // Parameters to pass to OAuth 2.0 endpoint.
+      const params = new URLSearchParams({
+        'code': oauth2Code,
+        'grant_type': 'authorization_code',
+        'redirect_uri': window.location.href,
+        'code_verifier': codeVerifier,
+        'client_id': DROPBOX_CLIENT_ID
+      });
+
+      this.auth.dropbox.state = 'pending';
+
+      fetch(oauth2Endpoint, {
+        method: 'POST', // *GET, POST, PUT, DELETE, etc.
+        mode: 'cors', // no-cors, *cors, same-origin
+        cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+        credentials: 'same-origin', // include, *same-origin, omit
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        redirect: 'follow', // manual, *follow, error
+        referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+        body: params // body data type must match "Content-Type" header
+      }).then(r => {
+        r.json().then(responseData => {
+          if (!r.ok) {
+            console.log(responseData.error_summary);
+            this.onAuthFailedDropbox();
+            return;
+          }
+          if (!responseData.access_token) {
+            console.warn("token reponse missing access_token");
+            return;
+          }
+          // Clean up PKCE challenge
+          delete sessionStorage.lestgern_dbx_code_verifier;
+          this.onAuthedDropbox(responseData);
+        });
+      });
+    },
+
+    onAuthedDropbox(tokenData) {
+      sessionStorage.lestgern_dbx_oauth_access = JSON.stringify(tokenData);
+      this.auth.dropbox.tokenData = tokenData;
+      this.auth.dropbox.state = 'success';
+    },
+
+    onAuthFailedDropbox() {
+      this.auth.dropbox.state = 'failed';
+    },
+
+    loadFromDropbox() {
+      // TODO
+    },
+    saveToDropbox() {
+      // TODO
     },
 
     focusHint(event) {

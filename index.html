@@ -54,6 +54,19 @@
           <small>
             <a href="#" v-on:click="showHelp">Help</a>
           </small>
+          <small>
+            <span v-if="auth.dropbox.state === 'success'"
+              >yu in</span>
+            <span v-else-if="auth.dropbox.state === 'pending'"
+              >workin' on it</span>
+            <span v-else-if="auth.dropbox.state === 'failed'"
+              >went wrong</span>
+            <a href="#"
+              v-else
+              v-on:click="loginAtDropbox"
+               alt="Authenticate with Dropbox to backup your progress there."
+              >Auth Dropbox</a>
+          </small>
           <small class="lang-selection">
             <button
               v-for="langCode in ['de', 'nl', 'pl']"
