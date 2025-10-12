@@ -1124,7 +1124,6 @@ window.app = new Vue({
         redirect: 'follow',
         body: blob,
       }).then(async r => {
-        responseData = await r.json();
         return r.json().then(responseData => {
           if (!r.ok) {
             console.log(responseData.error_summary);
