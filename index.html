@@ -55,8 +55,12 @@
             <a href="#" v-on:click="showHelp">Help</a>
           </small>
           <small>
-            <span v-if="auth.dropbox.state === 'success'"
-              >yu in</span>
+            <span v-if="auth.dropbox.state === 'success'">
+              <dropbox-saver
+                  v-bind:state="remoteSave.dropbox.state"
+                  v-on:save-data="saveToDropbox"
+                ></dropbox-saver>
+            </span>
             <span v-else-if="auth.dropbox.state === 'pending'"
               >workin' on it</span>
             <span v-else-if="auth.dropbox.state === 'failed'"

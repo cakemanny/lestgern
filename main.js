@@ -378,6 +378,42 @@ Vue.component("help-view", {
   `
 });
 
+Vue.component("dropbox-saver", {
+  props: {
+    state: String, // dirty | saved | error | pending
+  },
+  data: function() {
+    return {};
+  },
+  methods: {
+    handleSave(_event) {
+      this.$emit("save-data");
+    }
+  },
+  computed: {
+    saveIcon() {
+      switch (this.state) {
+        case 'dirty': return '☁️'; // Cloud
+        case 'saved': return '🌤️'; // Sun behind cloud
+        case 'pending': return '✈️'; // Plane
+        case 'error': return '⛈️'; // Storm clouds
+      }
+      throw Error(`bad dropbox-editor state: ${this.state}`);
+    }
+  },
+  template: `
+    <span>
+      <button
+        v-on:click="handleSave"
+        v-bind:disabled="state === 'saved' || state === 'pending'"
+        >Save {{saveIcon}}</button>
+      <span v-if="state === 'error'"
+        > 😰 </span>
+      <button title="not yet implemented" disabled>Load 🛬</button>
+    </span>
+  `
+});
+
 window.app = new Vue({
   el: "#app",
   data: {
@@ -534,6 +570,11 @@ window.app = new Vue({
         state: "none",
         tokenData: null,
       }
+    },
+    remoteSave: {
+      dropbox: {
+        state: "dirty",
+      },
     },
   },
   created: function() {
@@ -804,6 +845,8 @@ window.app = new Vue({
 
     saveWordBank() {
       localStorage[this.storageKey("wordbank")] = JSON.stringify(this.wordBank);
+
+      this.remoteSave.dropbox.state = "dirty"
     },
 
     loadContent() {
@@ -1049,7 +1092,52 @@ window.app = new Vue({
       // TODO
     },
     saveToDropbox() {
-      // TODO
+      let dataToExport = {};
+      for (let k in localStorage) {
+        if (k.startsWith('lestgern_')) {
+          dataToExport[k] = localStorage[k];
+        }
+      }
+      let blob = new Blob([JSON.stringify(dataToExport)], {type:"octet/stream"});
+
+      const accessToken = this.auth.dropbox.tokenData.access_token;
+
+      this.remoteSave.dropbox.state = 'pending';
+
+      // docs: https://www.dropbox.com/developers/documentation/http/documentation#files-upload
+      fetch('https://content.dropboxapi.com/2/files/upload', {
+        method: 'POST',
+        mode: 'cors',
+        cache: 'no-cache',
+        credentials: 'same-origin', // may need to be "include" ...
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Dropbox-API-Arg': JSON.stringify({
+            'autorename': false,
+            'mode': 'overwrite',
+            'mute': false,
+            'path': '/lestgern-data.v0.json',
+            'strict_conflict': false
+          }),
+          'Content-Type': 'application/octet-stream',
+        },
+        redirect: 'follow',
+        body: blob,
+      }).then(async r => {
+        responseData = await r.json();
+        return r.json().then(responseData => {
+          if (!r.ok) {
+            console.log(responseData.error_summary);
+            this.remoteSave.dropbox.state = "error";
+            return;
+          }
+          this.remoteSave.dropbox.state = "saved";
+          // TODO: do something with the revision or content hash?
+        })
+      }).catch(reason => {
+        console.error("saving to dropbox failed:", reason)
+        this.remoteSave.dropbox.state = "error";
+      })
     },
 
     focusHint(event) {
