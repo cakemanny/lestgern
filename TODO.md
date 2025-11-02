@@ -23,3 +23,8 @@
 - [ ] Use [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)
     instead of localStorage
 - [ ] Use firestore for some user data storage?
+
+## Cantonese
+- [ ] do jyutping conversion like
+      https://github.com/CanCLID/jyutping.net/blob/main/src/converter.ts
+- [ ] ability to select multiple characters and create "words" from them

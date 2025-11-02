@@ -21,6 +21,19 @@ function isAlpha(c) {
   if ("ćńśźżłóąęĆŃŚŹŻŁÓĄĘ".indexOf(c) != -1) {
     return true;
   }
+  // See this for ranges
+  // https://en.wikipedia.org/wiki/CJK_Unified_Ideographs
+  // \u4E00 to \u9FFF
+  const codePoint = c.codePointAt(0);
+  if (codePoint >= 19968 && codePoint <= 40959) {
+    return true
+  }
+  // Extension A
+  // 3400 - 4DBF
+  if (codePoint >= 13312 && codePoint <= 19903) {
+    return true;
+  }
+  // TODO: ... the remaining ranges
   return false;
 }
 
@@ -562,6 +575,52 @@ window.app = new Vue({
             name: "PWN",
             url: word => `https://sjp.pwn.pl/szukaj/${word}.html`
           }
+        ]
+      },
+      yue: {
+        bcp47code: "yue",
+        caseSensitive: true,
+        dictionaries: [
+          {
+            name: "EN Wiktionary",
+            url: word => `https://en.wiktionary.org/wiki/${word}#Chinese`,
+            isFavourite: true
+          },
+          {
+            name: "EN Wiktionary (links)",
+            url: word =>
+              `https://en.wiktionary.org/wiki/Special:WhatLinksHere/${word}`
+          },
+          {
+            name: "Canto Wikipedia",
+            url: word => `https://zh-yue.wikipedia.org/wiki/${word}`
+          },
+          {
+            name: "Google Translate",
+            url: word =>
+              `https://translate.google.com/?hl=en&sl=yue&tl=en&text=${word}&op=translate`
+          },
+          {
+            name: "Image Search",
+            url: word => `https://www.google.com/search?q=${word}&tbm=isch`
+          },
+          {
+            name: "Canto Words",
+            url: word => `https://cantowords.com/dictionary/wan/?q=${word}`
+          },
+          {
+            name: "shyyp.net",
+            url: word => `https://shyyp.net/hant/search?q=${word}`
+          },
+          {
+            name: "jyut.net",
+            url: word => `https://jyut.net/query?q=${word}`
+          },
+          {
+            name: "words.hk",
+            url: word => `https://words.hk/zidin/wan/?fp=1&q=${word}`
+          },
+          // https://www.moedict.tw/ could be useful?
         ]
       }
     },
