@@ -1,6 +1,8 @@
 /* global Vue */
 "use strict";
 
+const { createApp } = Vue;
+
 const DROPBOX_CLIENT_ID = 'cov7r6oc1yyd5ra';
 
 function isAlpha(c) {
@@ -37,399 +39,8 @@ function isAlpha(c) {
   return false;
 }
 
-Vue.component("keyboard-events", {
-  created: function() {
-    const component = this;
-    this.handler = function(e) {
-      if (e.target.localName === "body") {
-        component.$emit("keydown", e);
-      }
-    };
-    window.addEventListener("keydown", this.handler);
-  },
-  beforeDestroy: function() {
-    window.removeEventListener("keydown", this.handler);
-  },
-  template: `<div style="display:none"></div>`
-});
-
-Vue.component("sound-preview", {
-  props: {
-    text: String,
-    lang: String
-  },
-  created: function() {
-    if (window.speechSynthesis) {
-      // FIXME: this will break if there is ever more than one of these at a
-      // time
-      window.speechSynthesis.onvoiceschanged = () => {
-        this.voices = window.speechSynthesis.getVoices();
-      };
-    }
-  },
-  data: function() {
-    return {
-      voices: window.speechSynthesis ? window.speechSynthesis.getVoices() : [],
-      playing: false
-    };
-  },
-  methods: {
-    speak() {
-      // Have found that the remote engine can never play and jam the whole
-      // queue up.  If the user has clicked again, then we don't care about
-      // previous requests completing
-      window.speechSynthesis.cancel();
-
-      const utterance = new SpeechSynthesisUtterance();
-      utterance.text = this.text;
-
-      // There may be a better way to choose the appropriate language
-      const voices = this.voicesForLang();
-      const remoteDefault = voices.filter(v => v.default && !v.localService)[0];
-      const remote = voices.filter(v => !v.default && !v.localService)[0];
-      const localDefault = voices.filter(v => v.default && v.localService)[0];
-      const localOther = voices.filter(v => !v.default && v.localService)[0];
-      utterance.voice = remoteDefault || remote || localDefault || localOther;
-
-      utterance.onstart = () => {
-        this.playing = true;
-      };
-      utterance.onend = () => {
-        this.playing = false;
-      };
-      utterance.onerror = () => {
-        this.playing = false;
-      };
-
-      window.speechSynthesis.speak(utterance);
-    },
-
-    voicesForLang() {
-      // This obviously doesn't work in general. But might be ok what languages
-      // we are supporting...
-      return this.voices.filter(v => v.lang.startsWith(this.lang));
-    }
-  },
-  computed: {
-    hasSpeechSynthesis() {
-      if (this.voicesForLang().length > 0) {
-        return true;
-      }
-      return false;
-    }
-  },
-  template: `
-    <span v-if="hasSpeechSynthesis" class="sound-preview">
-      <span v-if="playing">🔊</span>
-      <span v-else v-on:click="speak">🔈</span>
-    </span>
-  `
-});
-
-Vue.component("entry-editor", {
-  props: {
-    word: {
-      type: String,
-      validator: value => !!value
-    },
-    wordBank: Object,
-    familiarity: Number,
-    language: Object
-  },
-  data: function() {
-    return {
-      hint: "",
-      newTag: ""
-    };
-  },
-  created: function() {
-    this.load();
-  },
-  computed: {
-    tags() {
-      let bankEntry = this.wordBank[this.word];
-      if (!bankEntry) {
-        // This is why our add method doesn't seem to work
-        return [];
-      }
-      if (!bankEntry.tags) {
-        bankEntry.tags = [];
-      }
-      return bankEntry.tags;
-    },
-
-    dictionaryLinks() {
-      const dictionaries = this.language.dictionaries;
-
-      const computeLink = (d, idx) => ({
-        name: d.name,
-        url: d.url(this.word),
-        isFavourite: !!d.isFavourite,
-        idx
-      });
-
-      return [].map.call(dictionaries, computeLink);
-    }
-  },
-  watch: {
-    word: function() {
-      // change the hint when the selected word changes
-      this.load();
-    }
-  },
-  methods: {
-    load() {
-      if (this.wordBank[this.word]) {
-        this.hint = this.wordBank[this.word].hint;
-      } else {
-        this.hint = "";
-      }
-      this.newTag = "";
-    },
-
-    focusHint() {
-      this.$refs.hintInput.focus();
-    },
-
-    blurHint(event) {
-      if (event.key === "Enter") {
-        this.$emit("save-hint", this.hint);
-      } else if (event.key === "Escape") {
-        this.load();
-      }
-      event.target.blur();
-      event.preventDefault();
-    },
-
-    handleBlur() {
-      this.$emit("save-hint", this.hint);
-    },
-
-    focusTag() {
-      this.$refs.newTagInput.focus();
-    },
-
-    addTag(event) {
-      this.$emit("add-tag", this.newTag);
-      this.newTag = "";
-      // This could be annoying but reaching for ESC after entering a tag
-      // is more painful. Hitting t for each tag isn't too hard.
-      event.target.blur();
-    }
-  },
-  template: `
-    <div>
-      <h3>
-        {{ word }}
-        <sound-preview v-bind:text="word" v-bind:lang="language.bcp47code"/>
-      </h3>
-      <input type="text"
-        id="hint"
-        ref="hintInput"
-        class="entry-editor__hint"
-        placeholder="hint"
-        v-model="hint"
-        v-on:keydown.esc="blurHint"
-        v-on:keydown.enter="blurHint"
-        v-on:blur="handleBlur" />
-      <ul>
-        <li v-for="tag in tags">
-          {{ tag }}
-          <button v-on:click="$emit('delete-tag', tag)">✖</button>
-        </li>
-        <li>
-          <div class="entry-editor__new-tag-container">
-            <input type="text"
-              placeholder="new tag"
-              class="entry-editor__new-tag-input"
-              v-model="newTag"
-              v-on:keydown.enter.prevent="addTag"
-              v-on:keydown.esc.prevent="$event.target.blur()"
-              ref="newTagInput"
-            />
-            <button v-on:click="addTag">Add</button>
-          </div>
-        </li>
-      </ul>
-      <div>
-        <!-- TODO: add spacing for mobile!! -->
-        <button
-          v-for="i in [0,1,2,3,4]"
-          class="entry-editor__familiarity"
-          v-bind:class="{'entry-editor__familiarity--selected': familiarity==i}"
-          v-on:click="$emit('set-familiarity', i)"
-          >{{ i }}</button>
-      </div>
-      <template v-for="dictLink in dictionaryLinks">
-        <p>
-          <a target="_" v-bind:href="dictLink.url">
-            {{ dictLink.name }}: {{ word }}
-          </a>
-          <!-- TODO: make these buttons -->
-          <span
-            class="entry-editor__fav"
-            v-if="dictLink.isFavourite"
-            >♥</span>
-          <span
-            class="entry-editor__fav"
-            v-else
-            v-on:click="$emit('set-favourite-dict', dictLink.idx)"
-            >♡</span>
-        </p>
-      </template>
-    </div>
-  `
-});
-
-Vue.component("lexeme-row", {
-  props: {
-    isWord: Function,
-    isPunc: Function,
-    isNewline: Function,
-    familiarity: Number,
-    isNew: Boolean,
-    row: Object
-  },
-  methods: {
-    wordClasses(lexeme) {
-      let result = [];
-      if (lexeme.isNew) {
-        result.push("new-word");
-      } else if (typeof lexeme.familiarity === "number") {
-        result.push("known-word-" + lexeme.familiarity);
-      }
-      if (lexeme.isSelected) {
-        result.push("selected-word");
-      }
-      return result;
-    }
-  },
-  // This is formatted oddly so that we don't end up with whitespace between
-  // the spans
-  template: `
-    <div>
-      <template v-for="lexeme in row.lexemes">
-        <span
-          v-if="isWord(lexeme)"
-          class="word"
-          v-bind:class="wordClasses(lexeme)"
-          v-bind:data-index="lexeme.index"
-        >{{ lexeme.word }}</span><span
-          v-else-if="isPunc(lexeme)"
-        >{{ lexeme.word }}</span><br
-          v-else-if="isNewline"/>
-      </template>
-    </div>
-  `
-});
-
-Vue.component("help-view", {
-  data: function() {
-    return {
-      keyHelp: [
-        ["←,h", "Select the previous word"],
-        ["→,l", "Select the next word"],
-        ["b", "Select next blue word"],
-        ["y", "Select next yellow word"],
-        ["x", "Ignore selected word"],
-        ["X", "Unignore selected word"],
-        ["H,g", "Focus on the hint box"],
-        ["K,f", "Open favourite dictionary"],
-        ["enter", "Save the hint / add the tag"],
-        ["esc", "Cancel editing the hint / tag"],
-        ["0,1,2,3,4", "Set word familiarity"],
-        ["t", "Focus on the tag box"],
-        ["?", "Show this help"]
-      ]
-    };
-  },
-  methods: {
-    handleBackgroundClick(event) {
-      if (event.target.className === "help-view") {
-        this.$emit("close-help");
-        event.stopPropagation();
-      }
-    }
-  },
-  template: `
-    <div class="help-view" v-on:click="handleBackgroundClick">
-      <div class="help-view__container">
-        <button
-          class="help-view__close"
-          type="button"
-          alt="close"
-          v-on:click="$emit('close-help')"
-          >✖</button>
-        <h2>Help</h2>
-        <h3>Getting Started</h3>
-        <ol>
-          <li>Paste an article or page from a book into the content box</li>
-          <li>Read a sentence</li>
-          <li>Select a word you are unfamiliar with</li>
-          <li>Use the lookup links to try to understand the word</li>
-          <li>Write down a hint in the hint box</li>
-          <li>Repeat until you understand the sentence</li>
-          <li>Mark any known words as level 4 familiarity</li>
-          <li>Repeat until you understand the article/page</li>
-          <li>
-            As you continue to use the app, when you see a word in yellow,
-            you will know that you have come across the word before.
-            Selecting the word will show the hint.
-            Increase the word's familiarity as it starts to become more
-            familiar.
-          </li>
-        </ol>
-        <h3>Keyboard Shortcuts</h3>
-        <table>
-          <tr v-for="keyRow in keyHelp">
-            <td><kbd>{{ keyRow[0] }}</kbd></td>
-            <td>{{ keyRow[1] }}</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-  `
-});
-
-Vue.component("dropbox-saver", {
-  props: {
-    state: String, // dirty | saved | error | pending
-  },
-  data: function() {
-    return {};
-  },
-  methods: {
-    handleSave(_event) {
-      this.$emit("save-data");
-    }
-  },
-  computed: {
-    saveIcon() {
-      switch (this.state) {
-        case 'dirty': return '☁️'; // Cloud
-        case 'saved': return '🌤️'; // Sun behind cloud
-        case 'pending': return '✈️'; // Plane
-        case 'error': return '⛈️'; // Storm clouds
-      }
-      throw Error(`bad dropbox-editor state: ${this.state}`);
-    }
-  },
-  template: `
-    <span>
-      <button
-        v-on:click="handleSave"
-        v-bind:disabled="state === 'saved' || state === 'pending'"
-        >Save {{saveIcon}}</button>
-      <span v-if="state === 'error'"
-        > 😰 </span>
-      <button title="not yet implemented" disabled>Load 🛬</button>
-    </span>
-  `
-});
-
-window.app = new Vue({
-  el: "#app",
-  data: {
+window.app = createApp({
+  data: function () {return {
     selectedLanguage: "de",
 
     content: "",
@@ -635,7 +246,7 @@ window.app = new Vue({
         state: "dirty",
       },
     },
-  },
+  };},
   created: function() {
     let storedLang = localStorage.lestgern_lang;
     if (storedLang && storedLang in this.languages) {
@@ -1378,3 +989,395 @@ window.app = new Vue({
     }
   }
 });
+
+app.component("keyboard-events", {
+  created: function() {
+    const component = this;
+    this.handler = function(e) {
+      if (e.target.localName === "body") {
+        component.$emit("keydown", e);
+      }
+    };
+    window.addEventListener("keydown", this.handler);
+  },
+  beforeDestroy: function() {
+    window.removeEventListener("keydown", this.handler);
+  },
+  template: `<div style="display:none"></div>`
+});
+
+app.component("sound-preview", {
+  props: {
+    text: String,
+    lang: String
+  },
+  created: function() {
+    if (window.speechSynthesis) {
+      // FIXME: this will break if there is ever more than one of these at a
+      // time
+      window.speechSynthesis.onvoiceschanged = () => {
+        this.voices = window.speechSynthesis.getVoices();
+      };
+    }
+  },
+  data: function() {
+    return {
+      voices: window.speechSynthesis ? window.speechSynthesis.getVoices() : [],
+      playing: false
+    };
+  },
+  methods: {
+    speak() {
+      // Have found that the remote engine can never play and jam the whole
+      // queue up.  If the user has clicked again, then we don't care about
+      // previous requests completing
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance();
+      utterance.text = this.text;
+
+      // There may be a better way to choose the appropriate language
+      const voices = this.voicesForLang();
+      const remoteDefault = voices.filter(v => v.default && !v.localService)[0];
+      const remote = voices.filter(v => !v.default && !v.localService)[0];
+      const localDefault = voices.filter(v => v.default && v.localService)[0];
+      const localOther = voices.filter(v => !v.default && v.localService)[0];
+      utterance.voice = remoteDefault || remote || localDefault || localOther;
+
+      utterance.onstart = () => {
+        this.playing = true;
+      };
+      utterance.onend = () => {
+        this.playing = false;
+      };
+      utterance.onerror = () => {
+        this.playing = false;
+      };
+
+      window.speechSynthesis.speak(utterance);
+    },
+
+    voicesForLang() {
+      // This obviously doesn't work in general. But might be ok what languages
+      // we are supporting...
+      return this.voices.filter(v => v.lang.startsWith(this.lang));
+    }
+  },
+  computed: {
+    hasSpeechSynthesis() {
+      if (this.voicesForLang().length > 0) {
+        return true;
+      }
+      return false;
+    }
+  },
+  template: `
+    <span v-if="hasSpeechSynthesis" class="sound-preview">
+      <span v-if="playing">🔊</span>
+      <span v-else v-on:click="speak">🔈</span>
+    </span>
+  `
+});
+
+app.component("entry-editor", {
+  props: {
+    word: {
+      type: String,
+      validator: value => !!value
+    },
+    wordBank: Object,
+    familiarity: Number,
+    language: Object
+  },
+  data: function() {
+    return {
+      hint: "",
+      newTag: ""
+    };
+  },
+  created: function() {
+    this.load();
+  },
+  computed: {
+    tags() {
+      let bankEntry = this.wordBank[this.word];
+      if (!bankEntry) {
+        // This is why our add method doesn't seem to work
+        return [];
+      }
+      if (!bankEntry.tags) {
+        bankEntry.tags = [];
+      }
+      return bankEntry.tags;
+    },
+
+    dictionaryLinks() {
+      const dictionaries = this.language.dictionaries;
+
+      const computeLink = (d, idx) => ({
+        name: d.name,
+        url: d.url(this.word),
+        isFavourite: !!d.isFavourite,
+        idx
+      });
+
+      return [].map.call(dictionaries, computeLink);
+    }
+  },
+  watch: {
+    word: function() {
+      // change the hint when the selected word changes
+      this.load();
+    }
+  },
+  methods: {
+    load() {
+      if (this.wordBank[this.word]) {
+        this.hint = this.wordBank[this.word].hint;
+      } else {
+        this.hint = "";
+      }
+      this.newTag = "";
+    },
+
+    focusHint() {
+      this.$refs.hintInput.focus();
+    },
+
+    blurHint(event) {
+      if (event.key === "Enter") {
+        this.$emit("save-hint", this.hint);
+      } else if (event.key === "Escape") {
+        this.load();
+      }
+      event.target.blur();
+      event.preventDefault();
+    },
+
+    handleBlur() {
+      this.$emit("save-hint", this.hint);
+    },
+
+    focusTag() {
+      this.$refs.newTagInput.focus();
+    },
+
+    addTag(event) {
+      this.$emit("add-tag", this.newTag);
+      this.newTag = "";
+      // This could be annoying but reaching for ESC after entering a tag
+      // is more painful. Hitting t for each tag isn't too hard.
+      event.target.blur();
+    }
+  },
+  template: `
+    <div>
+      <h3>
+        {{ word }}
+        <sound-preview v-bind:text="word" v-bind:lang="language.bcp47code"/>
+      </h3>
+      <input type="text"
+        id="hint"
+        ref="hintInput"
+        class="entry-editor__hint"
+        placeholder="hint"
+        v-model="hint"
+        v-on:keydown.esc="blurHint"
+        v-on:keydown.enter="blurHint"
+        v-on:blur="handleBlur" />
+      <ul>
+        <li v-for="tag in tags">
+          {{ tag }}
+          <button v-on:click="$emit('delete-tag', tag)">✖</button>
+        </li>
+        <li>
+          <div class="entry-editor__new-tag-container">
+            <input type="text"
+              placeholder="new tag"
+              class="entry-editor__new-tag-input"
+              v-model="newTag"
+              v-on:keydown.enter.prevent="addTag"
+              v-on:keydown.esc.prevent="$event.target.blur()"
+              ref="newTagInput"
+            />
+            <button v-on:click="addTag">Add</button>
+          </div>
+        </li>
+      </ul>
+      <div>
+        <!-- TODO: add spacing for mobile!! -->
+        <button
+          v-for="i in [0,1,2,3,4]"
+          class="entry-editor__familiarity"
+          v-bind:class="{'entry-editor__familiarity--selected': familiarity==i}"
+          v-on:click="$emit('set-familiarity', i)"
+          >{{ i }}</button>
+      </div>
+      <template v-for="dictLink in dictionaryLinks">
+        <p>
+          <a target="_" v-bind:href="dictLink.url">
+            {{ dictLink.name }}: {{ word }}
+          </a>
+          <!-- TODO: make these buttons -->
+          <span
+            class="entry-editor__fav"
+            v-if="dictLink.isFavourite"
+            >♥</span>
+          <span
+            class="entry-editor__fav"
+            v-else
+            v-on:click="$emit('set-favourite-dict', dictLink.idx)"
+            >♡</span>
+        </p>
+      </template>
+    </div>
+  `
+});
+
+app.component("lexeme-row", {
+  props: {
+    isWord: Function,
+    isPunc: Function,
+    isNewline: Function,
+    familiarity: Number,
+    isNew: Boolean,
+    row: Object
+  },
+  methods: {
+    wordClasses(lexeme) {
+      let result = [];
+      if (lexeme.isNew) {
+        result.push("new-word");
+      } else if (typeof lexeme.familiarity === "number") {
+        result.push("known-word-" + lexeme.familiarity);
+      }
+      if (lexeme.isSelected) {
+        result.push("selected-word");
+      }
+      return result;
+    }
+  },
+  // This is formatted oddly so that we don't end up with whitespace between
+  // the spans
+  template: `
+    <div>
+      <template v-for="lexeme in row.lexemes">
+        <span
+          v-if="isWord(lexeme)"
+          class="word"
+          v-bind:class="wordClasses(lexeme)"
+          v-bind:data-index="lexeme.index"
+        >{{ lexeme.word }}</span><span
+          v-else-if="isPunc(lexeme)"
+        >{{ lexeme.word }}</span><br
+          v-else-if="isNewline"/>
+      </template>
+    </div>
+  `
+});
+
+app.component("help-view", {
+  data: function() {
+    return {
+      keyHelp: [
+        ["←,h", "Select the previous word"],
+        ["→,l", "Select the next word"],
+        ["b", "Select next blue word"],
+        ["y", "Select next yellow word"],
+        ["x", "Ignore selected word"],
+        ["X", "Unignore selected word"],
+        ["H,g", "Focus on the hint box"],
+        ["K,f", "Open favourite dictionary"],
+        ["enter", "Save the hint / add the tag"],
+        ["esc", "Cancel editing the hint / tag"],
+        ["0,1,2,3,4", "Set word familiarity"],
+        ["t", "Focus on the tag box"],
+        ["?", "Show this help"]
+      ]
+    };
+  },
+  methods: {
+    handleBackgroundClick(event) {
+      if (event.target.className === "help-view") {
+        this.$emit("close-help");
+        event.stopPropagation();
+      }
+    }
+  },
+  template: `
+    <div class="help-view" v-on:click="handleBackgroundClick">
+      <div class="help-view__container">
+        <button
+          class="help-view__close"
+          type="button"
+          alt="close"
+          v-on:click="$emit('close-help')"
+          >✖</button>
+        <h2>Help</h2>
+        <h3>Getting Started</h3>
+        <ol>
+          <li>Paste an article or page from a book into the content box</li>
+          <li>Read a sentence</li>
+          <li>Select a word you are unfamiliar with</li>
+          <li>Use the lookup links to try to understand the word</li>
+          <li>Write down a hint in the hint box</li>
+          <li>Repeat until you understand the sentence</li>
+          <li>Mark any known words as level 4 familiarity</li>
+          <li>Repeat until you understand the article/page</li>
+          <li>
+            As you continue to use the app, when you see a word in yellow,
+            you will know that you have come across the word before.
+            Selecting the word will show the hint.
+            Increase the word's familiarity as it starts to become more
+            familiar.
+          </li>
+        </ol>
+        <h3>Keyboard Shortcuts</h3>
+        <table>
+          <tr v-for="keyRow in keyHelp">
+            <td><kbd>{{ keyRow[0] }}</kbd></td>
+            <td>{{ keyRow[1] }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  `
+});
+
+app.component("dropbox-saver", {
+  props: {
+    state: String, // dirty | saved | error | pending
+  },
+  data: function() {
+    return {};
+  },
+  methods: {
+    handleSave(_event) {
+      this.$emit("save-data");
+    }
+  },
+  computed: {
+    saveIcon() {
+      switch (this.state) {
+        case 'dirty': return '☁️'; // Cloud
+        case 'saved': return '🌤️'; // Sun behind cloud
+        case 'pending': return '✈️'; // Plane
+        case 'error': return '⛈️'; // Storm clouds
+      }
+      throw Error(`bad dropbox-editor state: ${this.state}`);
+    }
+  },
+  template: `
+    <span>
+      <button
+        v-on:click="handleSave"
+        v-bind:disabled="state === 'saved' || state === 'pending'"
+        >Save {{saveIcon}}</button>
+      <span v-if="state === 'error'"
+        > 😰 </span>
+      <button title="not yet implemented" disabled>Load 🛬</button>
+    </span>
+  `
+});
+
+app.mount("#app");
