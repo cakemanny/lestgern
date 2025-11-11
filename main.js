@@ -921,11 +921,11 @@ window.app = createApp({
 
     _getOrAdd(wordBank, word) {
       if (!wordBank[word]) {
-        Vue.set(wordBank, word, {
+        wordBank[word] = {
           hint: "",
           tags: [],
           familiarity: 0
-        });
+        };
       }
       return wordBank[word];
     },
@@ -965,7 +965,7 @@ window.app = createApp({
 
     ignoreWord(event) {
       if (this.selectedWord) {
-        Vue.set(this.ignoredWords, this.selectedWord, true);
+        this.ignoredWords[this.selectedWord] = true;
         event.stopPropagation();
         event.preventDefault();
       }
@@ -973,8 +973,7 @@ window.app = createApp({
 
     unIgnoreWord(event) {
       if (this.selectedWord) {
-        // trigger change for Vue
-        Vue.set(this.ignoredWords, this.selectedWord, false);
+        this.ignoredWords[this.selectedWord] = false;
         event.stopPropagation();
         event.preventDefault();
       }
