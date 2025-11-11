@@ -1,7 +1,6 @@
-/* global Vue */
 "use strict";
 
-const { createApp } = Vue;
+import { createApp } from 'vue';
 
 const DROPBOX_CLIENT_ID = 'cov7r6oc1yyd5ra';
 
