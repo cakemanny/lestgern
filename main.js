@@ -465,10 +465,10 @@ window.app = createApp({
     },
     isKnown(lexeme) {
       const word = this.normalise(lexeme.word);
-      return Object.prototype.hasOwnProperty.call(this.wordBank, word);
+      return word in this.wordBank;
     },
     familiarity(word) {
-      if (Object.prototype.hasOwnProperty.call(this.wordBank, word)) {
+      if (this.wordBank[word]) {
         let bankEntry = this.wordBank[word];
         if (typeof bankEntry.familiarity === "undefined") {
           bankEntry.familiarity = 0;
