@@ -38,7 +38,88 @@ function isAlpha(c) {
   return false;
 }
 
-window.app = createApp({
+const parse = (content) => {
+
+  if (!content) {
+    return [];
+  }
+
+  const WORD = 0;
+  const PUNC = 1; // incl space
+  const NEWLINE = 2;
+
+  let theWords = [];
+  let currentWord = "";
+  let state = 0;
+  const c0 = content.charAt(0);
+  if (isAlpha(c0)) {
+    state = WORD;
+  } else if (c0 === "\n" || c0 === "\r") {
+    state = NEWLINE;
+  } else {
+    state = PUNC;
+  }
+
+  const switchTo = (newState, c) => {
+    state = newState;
+    currentWord = c;
+  };
+  for (let c of content) {
+    if (c === "\r") {
+      continue;
+    }
+    if (state == WORD) {
+      if (isAlpha(c)) {
+        currentWord += c;
+      } else if (c == "\n") {
+        theWords.push(currentWord);
+        switchTo(NEWLINE, c);
+      } else {
+        theWords.push(currentWord);
+        switchTo(PUNC, c);
+      }
+    } else if (state == NEWLINE) {
+      theWords.push("\n");
+      if (isAlpha(c)) {
+        switchTo(WORD, c);
+      } else if (c === "\n") {
+        // pass
+      } else {
+        switchTo(PUNC, c);
+      }
+    } else {
+      /* PUNC */
+      if (isAlpha(c)) {
+        theWords.push(currentWord);
+        switchTo(WORD, c);
+      } else if (c == "\n") {
+        theWords.push(currentWord);
+        switchTo(NEWLINE, c);
+      } else {
+        /* PUNC */
+        currentWord += c;
+      }
+    }
+  }
+  // add the final word
+  theWords.push(currentWord);
+
+  const theLexemes = theWords.map((word, index) => {
+    // want "word", "punctuation", "space"... I think
+    const c0 = word.charAt(0);
+    if (isAlpha(c0)) {
+      return { kind: "word", word, index };
+    } else if (c0 == "\n") {
+      return { kind: "newline", index };
+    } else {
+      return { kind: "punc", word, index };
+    }
+  });
+
+  return theLexemes;
+};
+
+const app = createApp({
   data: function () {return {
     selectedLanguage: "de",
 
@@ -290,83 +371,7 @@ window.app = createApp({
       // the same word
       this.selectedLexemeIdx = -1;
 
-      const content = this.content;
-
-      if (!content) {
-        return [];
-      }
-
-      const WORD = 0;
-      const PUNC = 1; // incl space
-      const NEWLINE = 2;
-
-      let theWords = [];
-      let currentWord = "";
-      let state = 0;
-      const c0 = content.charAt(0);
-      if (isAlpha(c0)) {
-        state = WORD;
-      } else if (c0 === "\n" || c0 === "\r") {
-        state = NEWLINE;
-      } else {
-        state = PUNC;
-      }
-
-      const switchTo = (newState, c) => {
-        state = newState;
-        currentWord = c;
-      };
-      for (let c of content) {
-        if (c === "\r") {
-          continue;
-        }
-        if (state == WORD) {
-          if (isAlpha(c)) {
-            currentWord += c;
-          } else if (c == "\n") {
-            theWords.push(currentWord);
-            switchTo(NEWLINE, c);
-          } else {
-            theWords.push(currentWord);
-            switchTo(PUNC, c);
-          }
-        } else if (state == NEWLINE) {
-          theWords.push("\n");
-          if (isAlpha(c)) {
-            switchTo(WORD, c);
-          } else if (c === "\n") {
-            // pass
-          } else {
-            switchTo(PUNC, c);
-          }
-        } else {
-          /* PUNC */
-          if (isAlpha(c)) {
-            theWords.push(currentWord);
-            switchTo(WORD, c);
-          } else if (c == "\n") {
-            theWords.push(currentWord);
-            switchTo(NEWLINE, c);
-          } else {
-            /* PUNC */
-            currentWord += c;
-          }
-        }
-      }
-      // add the final word
-      theWords.push(currentWord);
-
-      const theLexemes = theWords.map((word, index) => {
-        // want "word", "punctuation", "space"... I think
-        const c0 = word.charAt(0);
-        if (isAlpha(c0)) {
-          return { kind: "word", word, index };
-        } else if (c0 == "\n") {
-          return { kind: "newline", index };
-        } else {
-          return { kind: "punc", word, index };
-        }
-      });
+      const theLexemes = parse(this.content)
 
       // Clearly the content hasn't broken our program... save!
       this.saveContent();
@@ -1378,4 +1383,4 @@ app.component("dropbox-saver", {
   `
 });
 
-app.mount("#app");
+export { app, parse };
