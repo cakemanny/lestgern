@@ -762,6 +762,12 @@ const app = createApp({
       this.auth.dropbox.state = 'failed';
     },
 
+    resetDropboxAuth() {
+      delete sessionStorage.lestgern_dbx_oauth_access;
+      this.auth.dropbox.tokenData = null;
+      this.auth.dropbox.state = 'none';
+    },
+
     loadFromDropbox() {
       // TODO
     },
@@ -776,7 +782,7 @@ const app = createApp({
 
       const accessToken = this.auth.dropbox.tokenData.access_token;
 
-      this.remoteSave.dropbox.state = 'pending';
+      this.remoteSave.dropbox.state = "pending";
 
       // docs: https://www.dropbox.com/developers/documentation/http/documentation#files-upload
       fetch('https://content.dropboxapi.com/2/files/upload', {
@@ -802,6 +808,13 @@ const app = createApp({
           if (!r.ok) {
             console.log(responseData.error_summary);
             this.remoteSave.dropbox.state = "error";
+            if (r.status === 401) {
+              // Access token has expired (or was never valid).
+              setTimeout(() => {
+                this.remoteSave.dropbox.state = "dirty";
+                this.resetDropboxAuth();
+              }, 3000);
+            }
             return;
           }
           this.remoteSave.dropbox.state = "saved";
