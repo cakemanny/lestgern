@@ -21,4 +21,13 @@ describe('parse', () => {
       { kind: 'word', word: 'braun', index: 10 },
     ]);
   });
+
+  test('粵話', () => {
+    const lexemes = parse('我係Peppa');
+    assert.deepEqual(lexemes, [
+      { kind: 'word', word: '我', index: 0 },
+      { kind: 'word', word: '係', index: 1 },
+      { kind: 'word', word: 'Peppa', index: 2 },
+    ]);
+  });
 });

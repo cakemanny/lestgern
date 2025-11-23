@@ -22,6 +22,10 @@ function isAlpha(c) {
   if ("ćńśźżłóąęĆŃŚŹŻŁÓĄĘ".indexOf(c) != -1) {
     return true;
   }
+  return false;
+}
+/** And, we specifically mean word characters here, not punctuation.*/
+function isCJK(c) {
   // See this for ranges
   // https://en.wikipedia.org/wiki/CJK_Unified_Ideographs
   // \u4E00 to \u9FFF
@@ -47,6 +51,7 @@ const parse = (content) => {
   const WORD = 0;
   const PUNC = 1; // incl space
   const NEWLINE = 2;
+  const CJK = 3;
 
   let theWords = [];
   let currentWord = "";
@@ -54,6 +59,8 @@ const parse = (content) => {
   const c0 = content.charAt(0);
   if (isAlpha(c0)) {
     state = WORD;
+  } else if (isCJK(c0)) {
+    state = CJK;
   } else if (c0 === "\n" || c0 === "\r") {
     state = NEWLINE;
   } else {
@@ -71,6 +78,23 @@ const parse = (content) => {
     if (state == WORD) {
       if (isAlpha(c)) {
         currentWord += c;
+      } else if (isCJK(c)) {
+        theWords.push(currentWord);
+        switchTo(CJK, c);
+      } else if (c == "\n") {
+        theWords.push(currentWord);
+        switchTo(NEWLINE, c);
+      } else {
+        theWords.push(currentWord);
+        switchTo(PUNC, c);
+      }
+    } else if (state == CJK) {
+      if (isAlpha(c)) {
+        theWords.push(currentWord);
+        switchTo(WORD, c);
+      } else if (isCJK(c)) {
+        theWords.push(currentWord);
+        switchTo(CJK, c);
       } else if (c == "\n") {
         theWords.push(currentWord);
         switchTo(NEWLINE, c);
@@ -82,6 +106,8 @@ const parse = (content) => {
       theWords.push("\n");
       if (isAlpha(c)) {
         switchTo(WORD, c);
+      } else if (isCJK(c)) {
+        switchTo(CJK, c);
       } else if (c === "\n") {
         // pass
       } else {
@@ -92,6 +118,9 @@ const parse = (content) => {
       if (isAlpha(c)) {
         theWords.push(currentWord);
         switchTo(WORD, c);
+      } else if (isCJK(c)) {
+        theWords.push(currentWord);
+        switchTo(CJK, c);
       } else if (c == "\n") {
         theWords.push(currentWord);
         switchTo(NEWLINE, c);
@@ -104,10 +133,17 @@ const parse = (content) => {
   // add the final word
   theWords.push(currentWord);
 
+  // starting with CJK leaves empty word at start
+  if (theWords.length > 0 && theWords[0] === '') {
+    theWords = theWords.slice(1);
+  }
+
   const theLexemes = theWords.map((word, index) => {
     // want "word", "punctuation", "space"... I think
     const c0 = word.charAt(0);
     if (isAlpha(c0)) {
+      return { kind: "word", word, index };
+    } else if (isCJK(c0)) {
       return { kind: "word", word, index };
     } else if (c0 == "\n") {
       return { kind: "newline", index };
