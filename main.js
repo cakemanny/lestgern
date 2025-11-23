@@ -163,6 +163,8 @@ const app = createApp({
 
     selectedLexemeIdx: -1,
 
+    selectedPhraseEndIdx: -1,
+
     helpDisplayed: false,
 
     wordBank: {
@@ -454,7 +456,11 @@ const app = createApp({
 
         if (containsSelectedLexeme) {
           const newLexemes = row.lexemes.map(lexeme => {
-            const isSelected = lexeme.index === this.selectedLexemeIdx;
+            let isSelected =
+              (this.selectedPhraseEndIdx > 0)
+              ? lexeme.index <= this.selectedPhraseEndIdx && lexeme.index >= this.selectedLexemeIdx
+              : lexeme.index === this.selectedLexemeIdx
+            ;
             if (isSelected) {
               return Object.assign({}, lexeme, { isSelected: true });
             } else {
@@ -477,6 +483,19 @@ const app = createApp({
         const idx = this.selectedLexemeIdx;
         if (idx < 0 || idx >= lexemes.length) {
           return "";
+        }
+
+        const endIdx = this.selectedPhraseEndIdx;
+        if (endIdx >= 0 && endIdx > idx && endIdx < lexemes.length) {
+          let phraseParts = [];
+          for (let i = idx; i <= endIdx; i++) {
+            phraseParts.push(lexemes[i].word);
+          }
+          const phrase = phraseParts.join('');
+          if (!this.languages[this.selectedLanguage].caseSensitive) {
+            return phrase.toLowerCase();
+          }
+          return phrase;
         }
 
         const lexeme = lexemes[idx];
@@ -596,6 +615,7 @@ const app = createApp({
         return;
       }
       this.selectedLexemeIdx = index;
+      this.selectedPhraseEndIdx = -1;
     },
 
     handleLexemeClick(event) {
@@ -605,6 +625,11 @@ const app = createApp({
         const index = event.target.dataset["index"] | 0;
         this.selectWord(index);
       }
+    },
+
+    handlePhraseSelected(startIdx, endIdx) {
+      this.selectedLexemeIdx = startIdx;
+      this.selectedPhraseEndIdx = endIdx;
     },
 
     handleKey(event) {
@@ -1295,6 +1320,11 @@ app.component("lexeme-row", {
     isNew: Boolean,
     row: Object
   },
+  data: () => ({
+    // Phrase Selection
+    selectionStart: null,
+    selectionEnd: null,
+  }),
   methods: {
     wordClasses(lexeme) {
       let result = [];
@@ -1306,13 +1336,65 @@ app.component("lexeme-row", {
       if (lexeme.isSelected) {
         result.push("selected-word");
       }
+
+      const ss = this.selectionStart,
+        se = this.selectionEnd,
+        idx = lexeme.index;
+      if (ss !== null && se !== null) {
+        // Support both leftwards and rightwards drag
+        if ((idx >= ss && idx <= se) || (idx >= se && idx <= ss)) {
+          result.push("selected-phrase");
+        }
+      }
       return result;
-    }
+    },
+    // start selection
+    handleMousedown(event) {
+      if (event && event.target.dataset["index"]) {
+        const index = event.target.dataset["index"] | 0;
+        this.selectionStart = index;
+        this.selectionEnd = null;
+      }
+    },
+    handleMouseover(event) {
+      // extend selection
+      if (this.selectionStart !== null) {
+        if (event && event.target.dataset["index"]
+            && ((event.buttons & 1) === 1)) {
+          const index = event.target.dataset["index"] | 0;
+          this.selectionEnd = index;
+        }
+      }
+    },
+    // end selection
+    handleMouseup(event) {
+      if (event && event.target.dataset["index"]) {
+        const index = event.target.dataset["index"] | 0;
+        if (index === this.selectionStart) {
+          this.selectionStart = null;
+          this.selectionEnd = null;
+        } else {
+          this.selectionEnd = index;
+          this.$emit(
+            "phrase-selected",
+            Math.min(this.selectionStart, this.selectionEnd),
+            Math.max(this.selectionStart, this.selectionEnd),
+          );
+        }
+      } else {
+        this.selectionStart = null;
+        this.selectionEnd = null;
+      }
+    },
   },
   // This is formatted oddly so that we don't end up with whitespace between
   // the spans
   template: `
-    <div>
+    <div
+      v-on:mousedown="handleMousedown"
+      v-on:mouseup="handleMouseup"
+      v-on:mouseover="handleMouseover"
+    >
       <template v-for="lexeme in row.lexemes">
         <span
           v-if="isWord(lexeme)"

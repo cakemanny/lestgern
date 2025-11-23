@@ -37,6 +37,7 @@ body {
   overflow: scroll;
   color: #636363; /* gray */
   text-indent: 1ex;
+  user-select: none;
 }
 
 /*
@@ -66,6 +67,9 @@ body {
 }
 .selected-word {
   color: black;
+}
+.selected-phrase {
+  text-decoration: underline;
 }
 
 .top-right-row {
