@@ -155,8 +155,7 @@ const parse = (content) => {
   return theLexemes;
 };
 
-const markPhrases = (wordBank, lexemes) => {
-
+const buildPhraseBank = (wordBank) => {
   // TODO: cache this for a given word bank
   const phraseBank = {};
   for (let k of Object.keys(wordBank)) {
@@ -170,6 +169,14 @@ const markPhrases = (wordBank, lexemes) => {
         phraseBank[start].push({ k, l: lexemes, });
       }
     }
+  }
+  return phraseBank;
+};
+
+const markPhrases = (wordBank, lexemes, phraseBank) => {
+
+  if (typeof phraseBank === 'undefined') {
+    phraseBank = buildPhraseBank(wordBank);
   }
 
   // What is the right algorithm here?
@@ -470,6 +477,10 @@ const app = createApp({
       return theLexemes;
     },
 
+    phraseBank() {
+      return buildPhraseBank(this.wordBank);
+    },
+
     groupedLexemes() {
       function newRow() {
         return {
@@ -498,7 +509,7 @@ const app = createApp({
       rows.push(currentRow);
 
       rows = rows.map(row => Object.assign({}, row, {
-        lexemes: markPhrases(this.wordBank, row.lexemes)
+        lexemes: markPhrases(this.wordBank, row.lexemes, this.phraseBank)
       }))
 
       return rows;
