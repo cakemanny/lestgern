@@ -155,6 +155,59 @@ const parse = (content) => {
   return theLexemes;
 };
 
+const markPhrases = (wordBank, lexemes) => {
+
+  // TODO: cache this for a given word bank
+  const phraseBank = {};
+  for (let k of Object.keys(wordBank)) {
+    const lexemes = parse(k); // TODO: use some kind of cheaper isPhrase test?
+    if (lexemes.length > 1) {
+      const start = lexemes[0].word;
+      if (!phraseBank[start]) {
+        // TODO: Turn this into some kind of tree
+        phraseBank[start] = [{ k, l: lexemes, }]
+      } else {
+        phraseBank[start].push({ k, l: lexemes, });
+      }
+    }
+  }
+
+  // What is the right algorithm here?
+  // We ought to use some kind of stack and follow possible matches iteratively
+  // ... but we can come back to that.
+
+  const lexemeStringEqualSubStr = (l, r) => {
+    if (r.length > l.length) {
+      return false;
+    }
+    for (let i in r) {
+      // perhaps we might want to consider all punctuation equal...
+      if (l[i].word !== r[i].word) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  let phraseEnds = lexemes.map(_ => 0);
+  return lexemes.map((lexeme, i, lexemes) => {
+    if (Object.hasOwn(phraseBank, lexeme.word)) {
+      const phrases = phraseBank[lexeme.word];
+      const remaining = lexemes.slice(i);
+      let phrasesStarted = 0;
+      for (const p of phrases) {
+        if (lexemeStringEqualSubStr(remaining, p.l)) {
+          phrasesStarted += 1;
+          phraseEnds[i + p.l.length - 1] += 1;
+        }
+      }
+      return Object.assign({}, lexeme, { phrasesStarted, phrasesEnded: phraseEnds[i] });
+    } else {
+      return Object.assign({}, lexeme, { phrasesStarted: 0, phrasesEnded: phraseEnds[i] });
+    }
+  });
+};
+
 const app = createApp({
   data: function () {return {
     selectedLanguage: "de",
@@ -443,6 +496,10 @@ const app = createApp({
         }
       }
       rows.push(currentRow);
+
+      rows = rows.map(row => Object.assign({}, row, {
+        lexemes: markPhrases(this.wordBank, row.lexemes)
+      }))
 
       return rows;
     },
@@ -1336,6 +1393,16 @@ app.component("lexeme-row", {
       if (lexeme.isSelected) {
         result.push("selected-word");
       }
+      if (lexeme.phrasesStarted === 1) {
+        result.push("phrase-start");
+      } else if (lexeme.phrasesStarted >= 2) {
+        result.push("phrase-start-2");
+      }
+      if (lexeme.phrasesEnded > 0) {
+        result.push("phrase-end");
+      } else if (lexeme.phrasesEnded >= 2) {
+        result.push("phrase-end-2");
+      }
 
       const ss = this.selectionStart,
         se = this.selectionEnd,
@@ -1514,4 +1581,4 @@ app.component("dropbox-saver", {
   `
 });
 
-export { app, parse };
+export { app, parse, markPhrases };

@@ -71,6 +71,22 @@ body {
 .selected-phrase {
   text-decoration: underline;
 }
+.phrase-start {
+  border-bottom: red dashed 1px;
+  border-left: red dashed 1px;
+}
+.phrase-start-2 {
+  border-bottom: red dashed 2px;
+  border-left: red dashed 2px;
+}
+.phrase-end {
+  border-top: red dashed 1px;
+  border-right: red dashed 1px;
+}
+.phrase-end-2 {
+  border-top: red dashed 2px;
+  border-right: red dashed 2px;
+}
 
 .top-right-row {
   display: flex;
