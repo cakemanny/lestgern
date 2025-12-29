@@ -1392,6 +1392,7 @@ app.component("lexeme-row", {
     // Phrase Selection
     selectionStart: null,
     selectionEnd: null,
+    debounceActive: false,
   }),
   methods: {
     wordClasses(lexeme) {
@@ -1434,6 +1435,14 @@ app.component("lexeme-row", {
         this.selectionEnd = null;
       }
     },
+    handleTouchstart(event) {
+      event.preventDefault();
+      if (event && event.target.dataset["index"]) {
+        const index = event.target.dataset["index"] | 0;
+        this.selectionStart = index;
+        this.selectionEnd = null;
+      }
+    },
     handleMouseover(event) {
       // extend selection
       if (this.selectionStart !== null) {
@@ -1441,6 +1450,28 @@ app.component("lexeme-row", {
             && ((event.buttons & 1) === 1)) {
           const index = event.target.dataset["index"] | 0;
           this.selectionEnd = index;
+        }
+      }
+    },
+    handleTouchmove(event) {
+      event.preventDefault();
+      // TODO: ignore multi touch
+      // if (event.touches.length !== 1) return; // ??
+
+      if (this.selectionStart !== null) {
+        if (!this.debounceActive) {
+          for (const touch of event.targetTouches) {
+            const overwhich = document.elementFromPoint(touch.clientX, touch.clientY)
+            if (overwhich.dataset["index"]) {
+              const index = overwhich.dataset["index"] | 0;
+              this.selectionEnd = index;
+            }
+          }
+
+          this.debounceActive = true;
+          setTimeout(() => {
+            this.debounceActive = false;
+          }, 100);
         }
       }
     },
@@ -1464,6 +1495,45 @@ app.component("lexeme-row", {
         this.selectionEnd = null;
       }
     },
+    handleTouchend(event) {
+      event.preventDefault();
+      if (this.selectionStart === null) {
+        return;
+      }
+      if (this.selectionStart !== null && this.selectionEnd !== null
+          && this.selectionStart !== this.selectionEnd) {
+        this.$emit(
+          "phrase-selected",
+          Math.min(this.selectionStart, this.selectionEnd),
+          Math.max(this.selectionStart, this.selectionEnd),
+        );
+      } else {
+        // We also have to now handle clicks because we prevented the default
+        // on the touch start.
+        if (this.selectionStart === this.selectionEnd) {
+          event.target.click();
+        } else {
+          for (const touch of event.changedTouches) {
+            const overwhich = document.elementFromPoint(
+              touch.clientX, touch.clientY);
+            if (overwhich.dataset["index"]) {
+              const index = overwhich.dataset["index"] | 0;
+              this.selectionEnd = index;
+            }
+          }
+          if (this.selectionStart === this.selectionEnd) {
+            event.target.click();
+          }
+        }
+
+      }
+    },
+    handlePointerCancel(event) {
+      event.preventDefault();
+      this.selectionStart = null;
+      this.selectionEnd = null;
+    },
+
   },
   // This is formatted oddly so that we don't end up with whitespace between
   // the spans
@@ -1472,6 +1542,11 @@ app.component("lexeme-row", {
       v-on:mousedown="handleMousedown"
       v-on:mouseup="handleMouseup"
       v-on:mouseover="handleMouseover"
+      v-on:pointercancel="handlePointerCancel"
+      v-on:touchstart="handleTouchstart"
+      v-on:touchmove="handleTouchmove"
+      v-on:touchend="handleTouchend"
+      style="touch-action: pinch-zoom"
     >
       <template v-for="lexeme in row.lexemes">
         <span
