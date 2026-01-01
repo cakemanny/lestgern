@@ -1436,6 +1436,9 @@ app.component("lexeme-row", {
       }
     },
     handleTouchstart(event) {
+      if (event && event.touches.length !== 1) {
+        return;
+      }
       event.preventDefault();
       if (event && event.target.dataset["index"]) {
         const index = event.target.dataset["index"] | 0;
@@ -1454,10 +1457,10 @@ app.component("lexeme-row", {
       }
     },
     handleTouchmove(event) {
+      if (event && event.touches.length !== 1) {
+        return;
+      }
       event.preventDefault();
-      // TODO: ignore multi touch
-      // if (event.touches.length !== 1) return; // ??
-
       if (this.selectionStart !== null) {
         if (!this.debounceActive) {
           for (const touch of event.targetTouches) {
