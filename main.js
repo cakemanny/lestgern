@@ -489,16 +489,24 @@ const app = createApp({
         };
       }
 
-      let rows = [];
-      let currentRow = newRow();
+      // Assume that there are lots words that repeat themselves
+      const isNewAndFamByWord = {};
       for (let lexeme of this.lexemes) {
-        currentRow.lexemes.push(
-          Object.assign({}, lexeme, {
+        if (!(lexeme.word in isNewAndFamByWord)) {
+          isNewAndFamByWord[lexeme.word] = {
             // isSelected: false,
             isNew: this.isNew(lexeme),
             familiarity:
               lexeme.word && this.familiarity(this.normalise(lexeme.word))
-          })
+          }
+        }
+      }
+
+      let rows = [];
+      let currentRow = newRow();
+      for (let lexeme of this.lexemes) {
+        currentRow.lexemes.push(
+          Object.assign({}, lexeme, isNewAndFamByWord[lexeme.word])
         );
 
         if (this.isNewline(lexeme)) {
@@ -575,6 +583,15 @@ const app = createApp({
         }
       }
       return "";
+    },
+
+    // optimization because normalise is called a lot
+    normalise() {
+      const lang = this.languages[this.selectedLanguage];
+      if (lang.caseSensitive) {
+        return (word) => word;
+      }
+      return (word) => word.toLowerCase();
     }
   },
   methods: {
@@ -609,13 +626,6 @@ const app = createApp({
       return (
         this.isWord(lexeme) && !this.isKnown(lexeme) && !this.isIgnored(lexeme)
       );
-    },
-    normalise(word) {
-      const lang = this.languages[this.selectedLanguage];
-      if (lang.caseSensitive) {
-        return word;
-      }
-      return word.toLowerCase();
     },
 
     /*
