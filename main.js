@@ -22,6 +22,10 @@ function isAlpha(c) {
   if ("ćńśźżłóąęĆŃŚŹŻŁÓĄĘ".indexOf(c) != -1) {
     return true;
   }
+  // Norwegian
+  if ("æøåØÆÅ".indexOf(c) != -1) {
+    return true;
+  }
   return false;
 }
 /** And, we specifically mean word characters here, not punctuation.*/
