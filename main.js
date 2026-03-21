@@ -32,14 +32,20 @@ function isAlpha(c) {
 function isCJK(c) {
   // See this for ranges
   // https://en.wikipedia.org/wiki/CJK_Unified_Ideographs
-  // \u4E00 to \u9FFF
   const codePoint = c.codePointAt(0);
-  if (codePoint >= 19968 && codePoint <= 40959) {
+  if (codePoint >= 0x4E00 && codePoint <= 0x9FFF) {
     return true
   }
   // Extension A
-  // 3400 - 4DBF
-  if (codePoint >= 13312 && codePoint <= 19903) {
+  if (codePoint >= 0x3400 && codePoint <= 0x4DBF) {
+    return true;
+  }
+  // Extension B
+  if (codePoint >= 0x20000 && codePoint <= 0x2A6DF) {
+    return true;
+  }
+  // Extension C
+  if (codePoint >= 0x2A700 && codePoint <= 0x2B73F) {
     return true;
   }
   // TODO: ... the remaining ranges
