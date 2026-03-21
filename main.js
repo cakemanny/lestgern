@@ -419,6 +419,10 @@ const app = createApp({
             name: "words.hk",
             url: word => `https://words.hk/zidin/wan/?fp=1&q=${word}`
           },
+          {
+            name: "Multi-function Chinese Character Database",
+            url: word => `https://humanum.arts.cuhk.edu.hk/Lexis/lexi-mf/search.php?word=${word}`
+          }
           // https://www.moedict.tw/ could be useful?
         ]
       }
