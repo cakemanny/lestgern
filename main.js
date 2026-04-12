@@ -237,6 +237,8 @@ const app = createApp({
 
     helpDisplayed: false,
 
+    wordBankExplorerShown: false,
+
     wordBank: {
       /* -- Example:
       wird: {
@@ -424,6 +426,7 @@ const app = createApp({
             url: word => `https://humanum.arts.cuhk.edu.hk/Lexis/lexi-mf/search.php?word=${word}`
           }
           // https://www.moedict.tw/ could be useful?
+          // Or `https://www.zdic.net/hant/${word}` with its comparisons?
         ]
       }
     },
@@ -788,6 +791,14 @@ const app = createApp({
       this.helpDisplayed = false;
     },
 
+    toggleWordBankExplorer() {
+      this.wordBankExplorerShown = !this.wordBankExplorerShown;
+    },
+
+    closeWordBankExplorer() {
+      this.wordBankExplorerShown = false;
+    },
+
     async loginAtDropbox() {
       event.stopPropagation();
       event.preventDefault();
@@ -1107,6 +1118,13 @@ const app = createApp({
           wordEntry.hint = hint;
           this.saveWordBank();
         }
+      }
+    },
+
+    deleteEntry(word) {
+      if (word && this.wordBank[word]) {
+        delete this.wordBank[word];
+        this.saveWordBank();
       }
     },
 
@@ -1624,7 +1642,8 @@ app.component("help-view", {
         <button
           class="help-view__close"
           type="button"
-          alt="close"
+          title="Close"
+          aria-label="Close"
           v-on:click="$emit('close-help')"
           >✖</button>
         <h2>Help</h2>
@@ -1691,6 +1710,98 @@ app.component("dropbox-saver", {
         > 😰 </span>
       <button title="not yet implemented" disabled>Load 🛬</button>
     </span>
+  `
+});
+
+app.component("bin-icon", {
+  props: {
+    width: Number,
+    height: Number
+  },
+  template: `
+    <svg v-bind:width="width" v-bind:height="height" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 21C6.45 21 5.979 20.804 5.587 20.413C5.195 20.021 5 19.55 5 19V6H4V4H9V3H15V4H20V6H19V19C19 19.55 18.804 20.021 18.413 20.413C18.021 20.804 17.55 21 17 21H7ZM7 6V19H17V6H7ZM9 17H11V8H9V17ZM13 17H15V8H13V17Z" fill="currentColor"/>
+    </svg>
+  `
+})
+
+app.component("bin-icon-solid", {
+  props: {
+    width: Number,
+    height: Number
+  },
+  template: `
+    <svg v-bind:width="width" v-bind:height="height" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 21C6.45 21 5.979 20.804 5.587 20.413C5.195 20.021 5 19.55 5 19V6H4V4H9V3H15V4H20V6H19V19C19 19.55 18.804 20.021 18.413 20.413C18.021 20.804 17.55 21 17 21H7ZM9 17H11V8H9V17ZM13 17H15V8H13V17Z" fill="currentColor"/>
+    </svg>
+  `
+})
+
+/*
+ * Ideas. We ought to give information about how many words are in there
+ * at the various different levels.
+ */
+app.component("word-bank-explorer", {
+  props: {
+    wordBank: Object,
+  },
+  data: function() {
+    return {
+      searchTerm: "",
+    };
+  },
+  methods: {
+    closeWordBank() {
+      this.$emit("close-word-bank");
+    }
+  },
+  computed: {
+    results() {
+      let firstTen = [];
+      let term = this.searchTerm;
+      for (let [k, v] of Object.entries(this.wordBank)) {
+        if (k.includes(term) || (v.hint && v.hint.includes(term))) {
+          firstTen.push(k);
+          if (firstTen.length >= 10) {
+            break;
+          }
+        }
+      }
+      return firstTen;
+    },
+  },
+  template: `
+    <div class="word-bank-editor">
+      <div style="display:flex; justify-content:space-between;">
+        <input type="text"
+          id="word-bank-search-term"
+          placeholder="Search word bank"
+          v-model="searchTerm"
+          />
+        <button aria-label="Close" title="Close" v-on:click="closeWordBank()">Close</button>
+      </div>
+      <dl>
+        <div v-for="word in results" class="entry-card" style="display:flex;justify-content:space-between;">
+          <div>
+            <dt style="display:inline">
+              {{ word }}
+            </dt>
+            <dd style="display:inline">{{ wordBank[word].hint }}</dd>
+            <dd style="display:inline"><span v-for="tag in wordBank[word].tags" class="tag">{{ tag }}</span></dd>
+          </div>
+          <div>
+            <button
+              class="delete-button"
+              title="Delete"
+              aria-label="Delete"
+              v-on:click="$emit('delete-entry', word)"
+            >
+              <bin-icon width="1.2em" height="1.2em" />
+            </button>
+          </div>
+        </div>
+      </dl>
+    </div>
   `
 });
 

@@ -158,6 +158,41 @@ button.lang--selected {
   right: 1em;
 }
 
+/* word-bank editor */
+.word-bank-editor {
+  --bg-color: hsl(240 0 95);
+  margin: 2px 0;
+  padding: 4px;
+  border-radius: 4px;
+  background-color: var(--bg-color);
+
+  display: flex;
+  flex-direction: column;
+
+  .entry-card {
+    font-size: 14px;
+    padding: 4px;
+    dt, dd {
+      display: inline;
+    }
+  }
+  .tag {
+    text-decoration: underline;
+    margin-right: 5px;
+  }
+  .delete-button {
+    background: none;
+    border-radius: 2px;
+    border: 1px solid var(--bg-color);
+    border: 1px solid hsl(from var(--bg-color) h s calc(l - 10));
+    color: hsl(from var(--bg-color) h s calc(l - 20));
+  }
+  .delete-button:hover {
+    border: 1px solid hsl(from var(--bg-color) h s calc(l - 20));
+    color: hsl(from var(--bg-color) h s calc(l - 40));
+  }
+}
+
 /* transitions */
 .slide-down-enter-active {
   transition: all 0.3s ease;
@@ -165,7 +200,7 @@ button.lang--selected {
 .slide-down-leave-active {
   transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1);
 }
-.slide-down-enter,
+.slide-down-enter-from,
 .slide-down-leave-to {
   transform: translateY(-10px);
   opacity: 0;

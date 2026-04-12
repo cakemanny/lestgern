@@ -49,7 +49,7 @@
           class="content-interactive Column-cell-fill"
           v-on:click="handleLexemeClick"
         >
-          <!-- this things we have to do for performance -->
+          <!-- this thing we have to do for performance -->
           <span v-for="row in groupedLexemesWithSelection">
             <lexeme-row
               v-bind:row="row"
@@ -63,7 +63,7 @@
       </div>
       <div class="Grid-cell">
         <div class="top-right-row">
-          <small>Words in word bank: {{wordCount}}</small>
+          <small>Words in <a href="#" v-on:click="toggleWordBankExplorer">word bank</a>: {{wordCount}}</small>
           <small>
             <a href="#" v-on:click="showHelp">Help</a>
           </small>
@@ -93,6 +93,12 @@
               >{{langCode}}</button>
           </small>
         </div>
+        <word-bank-explorer
+          v-if="wordBankExplorerShown"
+          v-bind:word-bank="wordBank"
+          v-on:close-word-bank="closeWordBankExplorer"
+          v-on:delete-entry="deleteEntry"
+          ></word-bank-explorer>
         <div v-if="!selectedWord">
           <h3>Select a word</h3>
         </div>
