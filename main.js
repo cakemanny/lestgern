@@ -273,7 +273,7 @@ const app = createApp({
           },
           {
             name: "DeepL",
-            url: word => `https://www.deepl.com/en/translator#de/en/${word}`,
+            url: word => `https://www.deepl.com/en/translator#de/en-GB/${word}`,
             isFavourite: true
           },
           {
@@ -305,7 +305,7 @@ const app = createApp({
           },
           {
             name: "DeepL",
-            url: word => `https://www.deepl.com/en/translator#nl/en/${word}`
+            url: word => `https://www.deepl.com/en/translator#nl/en-GB/${word}`
           },
           {
             name: "Image Search",
@@ -347,7 +347,7 @@ const app = createApp({
           },
           {
             name: "DeepL",
-            url: word => `https://www.deepl.com/en/translator#pl/en/${word}`
+            url: word => `https://www.deepl.com/en/translator#pl/en-GB/${word}`
           },
           {
             name: "Image Search",
