@@ -422,6 +422,10 @@ const app = createApp({
             url: word => `https://words.hk/zidin/wan/?fp=1&q=${word}`
           },
           {
+            name: "cccanto",
+            url: word => `https://cccanto.org/search.php?q=${word}`
+          },
+          {
             name: "Multi-function Chinese Character Database",
             url: word => `https://humanum.arts.cuhk.edu.hk/Lexis/lexi-mf/search.php?word=${word}`
           }
